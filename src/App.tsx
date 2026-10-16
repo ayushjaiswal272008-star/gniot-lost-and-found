@@ -45,6 +45,8 @@ import { AIAssistantChat } from './components/AIAssistantChat';
 import { SearchPage } from './components/SearchPage';
 import { StudentDashboard } from './components/StudentDashboard';
 import { AdminPortal } from './components/AdminPortal';
+import { INITIAL_CAMPUS_LOCATIONS } from './data/campusData';
+import { DataService } from './services/dataService';
 
 export default function App() {
   // Theme state
@@ -58,7 +60,7 @@ export default function App() {
 
   // Database / state
   const [reports, setReports] = useState<ReportItem[]>([]);
-  const [campusLocations, setCampusLocations] = useState<CampusLocation[]>([]);
+  const [campusLocations, setCampusLocations] = useState<CampusLocation[]>(INITIAL_CAMPUS_LOCATIONS);
   const [claims, setClaims] = useState<Claim[]>([]);
   const [matches, setMatches] = useState<AIMatchResult[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -107,11 +109,11 @@ export default function App() {
   const fetchData = async () => {
     try {
       const [resReports, resLocations, resStats, resClaims, resNotifs] = await Promise.all([
-        fetch('/api/reports').then(r => r.json()),
-        fetch('/api/locations').then(r => r.json()),
-        fetch('/api/stats').then(r => r.json()),
-        fetch('/api/claims').then(r => r.json()),
-        fetch('/api/notifications?userId=user-rohit').then(r => r.json())
+        DataService.getReports(),
+        DataService.getLocations(),
+        DataService.getStats(),
+        DataService.getClaims(),
+        DataService.getNotifications(currentUser.id)
       ]);
 
       setReports(resReports);
@@ -120,7 +122,7 @@ export default function App() {
       setClaims(resClaims);
       setNotifications(resNotifs);
     } catch (err) {
-      console.error('Initial fetch failed:', err);
+      console.warn('Data fetch fallback:', err);
     }
   };
 
@@ -144,14 +146,8 @@ export default function App() {
 
   const handleVerifyClaim = async (claimId: string, action: 'approve' | 'reject' | 'resolve', notes?: string) => {
     try {
-      const res = await fetch(`/api/claims/${claimId}/verify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, adminNotes: notes, performedBy: 'GNIOT Security Admin' })
-      });
-      if (res.ok) {
-        fetchData();
-      }
+      await DataService.verifyClaim(claimId, action, notes);
+      await fetchData();
     } catch (e) {
       console.error('Verify claim failed:', e);
     }
@@ -159,14 +155,8 @@ export default function App() {
 
   const handleUpdateReportStatus = async (reportId: string, newStatus: any) => {
     try {
-      const res = await fetch(`/api/reports/${reportId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus, performedBy: 'GNIOT Portal' })
-      });
-      if (res.ok) {
-        fetchData();
-      }
+      await DataService.updateReportStatus(reportId, newStatus);
+      await fetchData();
     } catch (e) {
       console.error('Update status failed:', e);
     }

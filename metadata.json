@@ -2,5 +2,7 @@
   "name": "GNIOT Lost & Found AI",
   "description": "Futuristic 3D campus lost & found platform with AI smart matching, visual search, and secure claim recovery for GNIOT College, Greater Noida.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

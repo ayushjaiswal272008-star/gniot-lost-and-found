@@ -4,8 +4,9 @@ import path from 'path';
 import {fileURLToPath} from 'url';
 import {defineConfig} from 'vite';
 
-export default defineConfig(() => {
+export default defineConfig(({ command }) => {
   return {
+    base: process.env.VITE_BASE_PATH || (command === 'serve' ? '/' : '/gniot-lost-and-found/'),
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

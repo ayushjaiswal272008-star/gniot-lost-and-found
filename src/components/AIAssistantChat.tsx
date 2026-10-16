@@ -72,6 +72,7 @@ export const AIAssistantChat: React.FC<AIAssistantChatProps> = ({
         body: JSON.stringify({ message: query }),
       });
 
+      if (!res.ok) throw new Error(`API returned status ${res.status}`);
       const data = await res.json();
       const botMsg: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
@@ -82,11 +83,27 @@ export const AIAssistantChat: React.FC<AIAssistantChatProps> = ({
       };
       setMessages(prev => [...prev, botMsg]);
     } catch (err) {
+      const q = query.toLowerCase();
+      let offlineReply = '';
+
+      if (q.includes('report') || q.includes('lost') || q.includes('found')) {
+        offlineReply = 'To report an item on GNIOT campus:\n1. Click "+ Report Lost" or "+ Report Found" in the navigation bar.\n2. Fill in the item category, color, campus zone, and distinctive marks.\n3. Upload a photo or set secret verification clues.\nOur AI matching engine will automatically cross-check existing campus entries!';
+      } else if (q.includes('desk') || q.includes('where') || q.includes('location') || q.includes('office') || q.includes('library')) {
+        offlineReply = 'Primary GNIOT Lost Property Desks:\n• Central Library: Circulation Counter 2\n• Main Academic Block (APJ Kalam Block): Ground Floor Reception\n• Security Gate 1: Main Campus Security Control Room (+91 120 232xxxx)\n• Tech Labs: Block B Lab Technician Office (Lab 204)';
+      } else if (q.includes('vision') || q.includes('visual') || q.includes('photo') || q.includes('camera') || q.includes('image')) {
+        offlineReply = 'AI Vision Search allows you to upload any photo (e.g. water bottle, ID card, keys, laptop charger). It extracts item geometry, color tones, and brand markers to surface potential matching reports across GNIOT.';
+      } else if (q.includes('claim') || q.includes('verify') || q.includes('proof')) {
+        offlineReply = 'Ownership verification protects sensitive items. To claim an item:\n1. Open the item details card and click "Claim This Item".\n2. Answer the secret distinctive mark question set by the finder or provide your Student Roll Number / ID card proof.\n3. Campus security will verify and issue an authorization code.';
+      } else {
+        offlineReply = `Hello! I am AURA, your GNIOT Campus Assistant. You can ask me how to report items, where campus lost-property counters are located (APJ Kalam Block, Library, Gate 1), or use our 3D Explorer to locate drop-off points.`;
+      }
+
       const fallbackMsg: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
         sender: 'assistant',
-        text: 'Unable to reach the campus server right now. If you lost an item, please visit Library Counter 2 or the Security Gate 1 Lost Property cell.',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        text: offlineReply,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        source: 'fallback'
       };
       setMessages(prev => [...prev, fallbackMsg]);
     } finally {

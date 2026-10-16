@@ -11,6 +11,7 @@ import {
   Building2
 } from 'lucide-react';
 import { ItemCategory, CampusLocation, ReportItem, AIMatchResult } from '../types';
+import { DataService } from '../services/dataService';
 
 interface ReportFoundModalProps {
   isOpen: boolean;
@@ -116,14 +117,7 @@ export const ReportFoundModal: React.FC<ReportFoundModalProps> = ({
         userEmail: currentUser.email || 'finder@gniot.net.in',
       };
 
-      const res = await fetch('/api/reports', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) throw new Error('Failed to register found report');
-      const data = await res.json();
+      const data = await DataService.createReport(payload);
 
       setCreatedReport(data.report);
       onReportCreated(data.report, data.autoMatches || []);

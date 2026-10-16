@@ -1,10 +1,11 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
+import type { Request, Response } from 'express';
 import { GoogleGenAI } from '@google/genai';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
-import { 
+import type { 
   ReportItem, 
   AIMatchResult, 
   Claim, 
@@ -12,14 +13,14 @@ import {
   NotificationItem, 
   AuditLog, 
   PlatformStats 
-} from './src/types';
+} from './src/types.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-// Environment constraint: Dev server must run on port 3000.
-const PORT = 3000;
+// Environment constraint: Dev server must run on port 3000, production uses process.env.PORT (Cloud Run)
+const PORT = Number(process.env.PORT) || 3000;
 
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true, limit: '20mb' }));
@@ -881,14 +882,18 @@ app.get('/api/admin/analytics', (_req: Request, res: Response) => {
 // VITE MIDDLEWARE & SERVER STARTUP
 // ==========================================
 async function startServer() {
-  if (process.env.NODE_ENV !== 'production') {
+  const distPath = path.resolve(__dirname, 'dist');
+  const hasDist = fs.existsSync(path.resolve(distPath, 'index.html'));
+  const isProduction = hasDist && process.env.NODE_ENV !== 'development';
+
+  if (!isProduction) {
     const vite = await createViteServer({
       server: { middlewareMode: true, hmr: false },
       appType: 'spa',
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.resolve(__dirname, 'dist');
+    app.use('/gniot-lost-and-found', express.static(distPath));
     app.use(express.static(distPath));
     app.get('*', (_req, res) => {
       res.sendFile(path.resolve(distPath, 'index.html'));

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { ReportItem, Claim } from '../types';
+import { DataService } from '../services/dataService';
 
 interface ClaimModalProps {
   isOpen: boolean;
@@ -45,26 +46,20 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      const res = await fetch('/api/claims', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          reportId: report.id,
-          claimantId: 'user-current',
-          claimantName: currentUser.name || 'GNIOT Student',
-          claimantEmail: currentUser.email || 'student@gniot.net.in',
-          claimantRollNo: currentUser.rollNo || '230133010xxxx',
-          claimantPhone,
-          proofDescription,
-          distinctiveMarkAnswer,
-          serialNumberOrIdClue,
-        }),
+      const newClaim = await DataService.createClaim({
+        reportId: report.id,
+        claimantId: 'user-ayush',
+        claimantName: currentUser.name || 'Ayush Jaiswal',
+        claimantEmail: currentUser.email || 'ayushjaiswal272008@gmail.com',
+        claimantRollNo: currentUser.rollNo || '240133010001',
+        claimantPhone,
+        proofDescription,
+        distinctiveMarkAnswer,
+        serialNumberOrIdClue,
       });
 
-      if (!res.ok) throw new Error('Claim submission failed');
-      const data = await res.json();
-      setSubmittedClaim(data.claim);
-      onClaimSubmitted(data.claim);
+      setSubmittedClaim(newClaim);
+      onClaimSubmitted(newClaim);
       setIsSuccess(true);
 
       // Trigger celebratory confetti

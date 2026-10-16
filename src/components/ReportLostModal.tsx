@@ -16,6 +16,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { ItemCategory, CampusLocation, ReportItem, AIMatchResult } from '../types';
+import { DataService } from '../services/dataService';
 
 interface ReportLostModalProps {
   isOpen: boolean;
@@ -128,14 +129,7 @@ export const ReportLostModal: React.FC<ReportLostModalProps> = ({
         userRollNo: currentUser.rollNo || '230133010xxxx',
       };
 
-      const res = await fetch('/api/reports', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) throw new Error('Failed to register lost report');
-      const data = await res.json();
+      const data = await DataService.createReport(payload);
 
       setCreatedReport(data.report);
       setAutoMatches(data.autoMatches || []);
