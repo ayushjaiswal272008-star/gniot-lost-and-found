@@ -497,9 +497,6 @@ export const Campus3DHero: React.FC<Campus3DHeroProps> = ({
             Let&apos;s Find It.
           </span>
         </h1>
-        <p className="mt-3 sm:mt-4 text-sm sm:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto font-normal leading-relaxed">
-          Powered by Gemini AI vision matching, semantic location tracking, and verified lost-property desks across GNIOT College, Greater Noida.
-        </p>
 
         {/* Primary Action Buttons */}
         <div className="mt-6 sm:mt-8 flex flex-wrap items-center justify-center gap-3 sm:gap-4 pointer-events-auto">
