@@ -64,16 +64,16 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/75 backdrop-blur-sm overflow-y-auto">
-      <div className="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden my-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
+      <div className="relative w-full max-w-3xl bg-[#E8EDF2] dark:bg-[#1E0B1D] rounded-3xl border border-slate-300 dark:border-[#D9A441]/30 shadow-2xl overflow-hidden my-6">
         {/* Header */}
-        <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <div className="px-6 py-4 bg-white/80 dark:bg-[#280F27] border-b border-slate-300 dark:border-[#D9A441]/20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span
               className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
                 report.type === 'lost'
-                  ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
-                  : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                  ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
+                  : 'bg-[#D9A441]/15 text-[#BE8B2C] dark:text-[#D9A441] border border-[#D9A441]/30'
               }`}
             >
               {report.type} Item
@@ -312,9 +312,9 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
                       onOpenClaim(report);
                       onClose();
                     }}
-                    className="flex-1 py-3 px-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-xs sm:text-sm shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2"
+                    className="flex-1 py-3 px-4 rounded-2xl bg-gradient-to-r from-[#D9A441] to-[#C59132] hover:brightness-105 text-[#190918] font-bold text-xs sm:text-sm shadow-lg shadow-[#D9A441]/25 transition-all flex items-center justify-center gap-2"
                   >
-                    <FileCheck2 className="w-4 h-4" />
+                    <FileCheck2 className="w-4 h-4 text-[#190918]" />
                     Claim / Verify Ownership
                   </button>
                 )}
@@ -327,7 +327,7 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
                         onClose();
                       }
                     }}
-                    className="py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md transition-all"
+                    className="py-3 px-4 rounded-2xl bg-[#30152F] hover:bg-[#200D1F] text-[#E8EDF2] font-semibold text-xs sm:text-sm border border-[#D9A441]/40 shadow-md transition-all"
                   >
                     Mark Reunited / Resolved
                   </button>

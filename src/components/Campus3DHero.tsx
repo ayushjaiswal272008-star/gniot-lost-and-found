@@ -465,11 +465,11 @@ export const Campus3DHero: React.FC<Campus3DHeroProps> = ({
 
       {/* Top Floating Badge */}
       <div className="absolute top-6 left-6 z-10 flex items-center gap-3">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-sm backdrop-blur-md">
-          <span className="w-2 h-2 rounded-full bg-emerald-500" />
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#E8EDF2]/90 dark:bg-[#30152F]/90 border border-slate-300 dark:border-[#D9A441]/30 text-xs font-semibold text-[#30152F] dark:text-[#E8EDF2] shadow-sm backdrop-blur-md">
+          <span className="w-2 h-2 rounded-full bg-[#D9A441] animate-pulse" />
           <span>GNIOT AI Spatial Engine Active</span>
         </div>
-        <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-500/10 dark:bg-orange-500/20 border border-orange-500/30 text-xs font-medium text-orange-600 dark:text-orange-400">
+        <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#D9A441]/10 border border-[#D9A441]/30 text-xs font-medium text-[#BE8B2C] dark:text-[#D9A441]">
           <span>Greater Noida Campus</span>
         </div>
       </div>
@@ -479,21 +479,21 @@ export const Campus3DHero: React.FC<Campus3DHeroProps> = ({
         <button
           onClick={() => setIsRotating(!isRotating)}
           title="Toggle Auto Floating Movement"
-          className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-400 shadow-sm backdrop-blur-md transition-all"
+          className="p-2.5 rounded-xl bg-[#E8EDF2]/90 dark:bg-[#30152F]/90 border border-slate-300 dark:border-[#D9A441]/30 text-[#30152F] dark:text-[#E8EDF2] hover:text-[#D9A441] dark:hover:text-[#D9A441] hover:border-[#D9A441] shadow-sm backdrop-blur-md transition-all"
         >
-          <RotateCcw className={`w-4 h-4 ${isRotating ? 'text-indigo-600 dark:text-indigo-400' : ''}`} />
+          <RotateCcw className={`w-4 h-4 ${isRotating ? 'text-[#D9A441]' : ''}`} />
         </button>
       </div>
 
       {/* Unobstructed Central Overlay Content */}
       <div className="absolute inset-x-0 top-16 sm:top-20 z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center pointer-events-none">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-4 rounded-full bg-indigo-500/10 dark:bg-indigo-400/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs sm:text-sm font-semibold tracking-wide uppercase">
-          <Sparkles className="w-4 h-4" />
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-4 rounded-full bg-[#D9A441]/10 dark:bg-[#D9A441]/15 border border-[#D9A441]/30 text-[#BE8B2C] dark:text-[#D9A441] text-xs sm:text-sm font-semibold tracking-wide uppercase">
+          <Sparkles className="w-4 h-4 text-[#D9A441]" />
           Next-Gen Campus Recovery System
         </div>
-        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white font-display drop-shadow-sm">
+        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#30152F] dark:text-[#E8EDF2] font-display drop-shadow-sm">
           Lost Something on Campus? <br className="hidden sm:inline" />
-          <span className="bg-gradient-to-r from-indigo-600 via-sky-500 to-orange-500 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-[#D9A441] via-[#F2C770] to-[#BE8B2C] bg-clip-text text-transparent">
             Let&apos;s Find It.
           </span>
         </h1>
@@ -502,23 +502,23 @@ export const Campus3DHero: React.FC<Campus3DHeroProps> = ({
         <div className="mt-6 sm:mt-8 flex flex-wrap items-center justify-center gap-3 sm:gap-4 pointer-events-auto">
           <button
             onClick={() => onQuickReport && onQuickReport('lost')}
-            className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-semibold text-sm sm:text-base shadow-lg shadow-rose-500/25 hover:shadow-rose-500/40 transform hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2"
+            className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-[#D9A441] via-[#E4C56D] to-[#BE8B2C] hover:brightness-105 text-[#190918] font-bold text-sm sm:text-base shadow-lg shadow-[#D9A441]/30 hover:shadow-[#D9A441]/45 transform hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2"
           >
-            <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+            <span className="w-2 h-2 rounded-full bg-[#190918] animate-ping" />
             Report Lost Item
           </button>
           <button
             onClick={() => onQuickReport && onQuickReport('found')}
-            className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold text-sm sm:text-base shadow-lg shadow-emerald-600/25 hover:shadow-emerald-600/40 transform hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2"
+            className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-[#30152F] to-[#481E46] hover:from-[#240E23] hover:to-[#30152F] text-[#E8EDF2] font-semibold text-sm sm:text-base border border-[#D9A441]/40 shadow-lg shadow-[#30152F]/30 hover:shadow-[#30152F]/50 transform hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2"
           >
-            <span className="w-2 h-2 rounded-full bg-emerald-200" />
+            <span className="w-2 h-2 rounded-full bg-[#D9A441]" />
             Report Found Item
           </button>
           <button
             onClick={() => onExploreSearch && onExploreSearch()}
-            className="px-5 py-3.5 rounded-2xl bg-white/90 dark:bg-slate-900/90 hover:bg-white dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-semibold text-sm sm:text-base shadow-md backdrop-blur-md transition-all flex items-center gap-2"
+            className="px-5 py-3.5 rounded-2xl bg-[#E8EDF2]/90 dark:bg-[#2B112A]/90 hover:bg-white dark:hover:bg-[#30152F] border border-slate-300 dark:border-[#D9A441]/30 text-[#30152F] dark:text-[#E8EDF2] font-semibold text-sm sm:text-base shadow-md backdrop-blur-md transition-all flex items-center gap-2"
           >
-            <Eye className="w-4 h-4 text-indigo-500" />
+            <Eye className="w-4 h-4 text-[#D9A441]" />
             Browse Registry
           </button>
         </div>
@@ -533,25 +533,25 @@ export const Campus3DHero: React.FC<Campus3DHeroProps> = ({
         <div className="flex justify-center -mb-2.5">
           <button
             onClick={() => setHudCollapsed(!hudCollapsed)}
-            className="px-3 py-1 rounded-t-lg bg-white/90 dark:bg-slate-900/90 border border-b-0 border-slate-200 dark:border-slate-800 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 backdrop-blur-md transition-all"
+            className="px-3 py-1 rounded-t-lg bg-[#E8EDF2]/90 dark:bg-[#30152F]/90 border border-b-0 border-slate-300 dark:border-[#D9A441]/30 text-[11px] font-medium text-[#30152F] dark:text-[#E8EDF2] hover:text-[#D9A441] dark:hover:text-[#D9A441] backdrop-blur-md transition-all"
           >
             {hudCollapsed ? '▴ Show 3D Info & Desk Stats' : '▾ Collapse 3D HUD'}
           </button>
         </div>
 
-        <div className="p-3 sm:p-4 rounded-2xl bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 shadow-xl backdrop-blur-md">
+        <div className="p-3 sm:p-4 rounded-2xl bg-[#E8EDF2]/90 dark:bg-[#2B112A]/90 border border-slate-300 dark:border-[#D9A441]/30 shadow-xl backdrop-blur-md">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs sm:text-sm">
-            <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
-              <span className="font-semibold text-indigo-600 dark:text-indigo-400 font-mono">3D Interactive:</span>
+            <div className="flex items-center gap-2 text-[#30152F] dark:text-[#E8EDF2]">
+              <span className="font-semibold text-[#D9A441] font-mono">3D Interactive:</span>
               <span>Rotate &amp; float common lost items (ID Cards, Keys, Wallets, Earbuds, Gadgets)</span>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-xs">
+              <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 text-xs">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 <span>Security Desk 1: Online</span>
               </div>
-              <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-xs">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+              <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 text-xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#D9A441]" />
                 <span>Library Counter 2: Ready</span>
               </div>
             </div>

@@ -84,26 +84,26 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/75 backdrop-blur-sm overflow-y-auto">
-      <div className="relative w-full max-w-xl bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden my-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
+      <div className="relative w-full max-w-xl bg-[#E8EDF2] dark:bg-[#1E0B1D] rounded-3xl border border-slate-300 dark:border-[#D9A441]/30 shadow-2xl overflow-hidden my-6">
         {/* Header */}
-        <div className="px-6 py-4 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-transparent border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <div className="px-6 py-4 bg-white/80 dark:bg-[#280F27] border-b border-slate-300 dark:border-[#D9A441]/20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
-              <ShieldCheck className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-2xl bg-[#D9A441]/20 text-[#D9A441] border border-[#D9A441]/30 flex items-center justify-center font-bold">
+              <ShieldCheck className="w-5 h-5 text-[#D9A441]" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white font-display">
+              <h2 className="text-lg font-bold text-[#30152F] dark:text-[#E8EDF2] font-display">
                 Secure Ownership Claim
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-600 dark:text-[#E8EDF2]/70">
                 Item: {report.title} ({report.id})
               </p>
             </div>
           </div>
           <button
             onClick={handleClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+            className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-[#30152F] transition-all"
           >
             <X className="w-5 h-5" />
           </button>
@@ -195,13 +195,13 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold text-sm shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2"
+                  className="w-full py-3 rounded-2xl bg-gradient-to-r from-[#D9A441] to-[#C59132] hover:brightness-105 disabled:opacity-50 text-[#190918] font-bold text-sm shadow-lg shadow-[#D9A441]/25 transition-all flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
                     <span>Registering Ownership Claim...</span>
                   ) : (
                     <>
-                      <FileCheck2 className="w-4 h-4" />
+                      <FileCheck2 className="w-4 h-4 text-[#190918]" />
                       Submit Verification Claim
                     </>
                   )}
@@ -210,20 +210,20 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({
             </form>
           ) : (
             <div className="text-center py-6 space-y-4">
-              <div className="w-16 h-16 mx-auto rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+              <div className="w-16 h-16 mx-auto rounded-full bg-[#D9A441]/20 text-[#D9A441] border border-[#D9A441]/40 flex items-center justify-center">
                 <CheckCircle2 className="w-8 h-8" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white font-display">
+                <h3 className="text-xl font-bold text-[#30152F] dark:text-[#E8EDF2] font-display">
                   Claim Request Filed!
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Claim ID: <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">{submittedClaim?.id}</span>
+                <p className="text-xs text-slate-600 dark:text-[#E8EDF2]/70 mt-1">
+                  Claim ID: <span className="font-mono font-bold text-[#D9A441]">{submittedClaim?.id}</span>
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60 text-left space-y-2 text-xs text-indigo-950 dark:text-indigo-200">
-                <div className="font-bold">Next Steps for Collection:</div>
+              <div className="p-4 rounded-2xl bg-white/80 dark:bg-[#2B112A] border border-slate-300 dark:border-[#D9A441]/25 text-left space-y-2 text-xs text-[#30152F] dark:text-[#E8EDF2]">
+                <div className="font-bold text-[#D9A441]">Next Steps for Collection:</div>
                 <div>1. The lost-property incharge at <span className="font-semibold">{report.storageDesk || 'Main Campus Security Gate 1'}</span> has received your claim.</div>
                 <div>2. Visit the desk with your physical <span className="font-semibold">GNIOT Student ID Card</span>.</div>
                 <div>3. Upon visual verification of your clue, sign the digital handover register to collect your item.</div>
@@ -231,7 +231,7 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({
 
               <button
                 onClick={handleClose}
-                className="w-full py-3 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-semibold text-sm transition-all"
+                className="w-full py-3 rounded-xl bg-[#30152F] hover:bg-[#200D1F] text-[#E8EDF2] font-semibold text-sm border border-[#D9A441]/30 transition-all shadow-md"
               >
                 Close &amp; Track in Dashboard
               </button>

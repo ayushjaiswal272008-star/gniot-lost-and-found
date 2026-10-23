@@ -152,26 +152,26 @@ export const ReportLostModal: React.FC<ReportLostModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/70 backdrop-blur-sm overflow-y-auto">
-      <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden my-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#30152F]/70 backdrop-blur-sm overflow-y-auto">
+      <div className="relative w-full max-w-2xl bg-white dark:bg-[#30152F] rounded-3xl border border-[#30152F]/15 dark:border-[#D9A441]/25 shadow-2xl overflow-hidden my-6">
         {/* Header */}
-        <div className="px-6 py-4 bg-gradient-to-r from-red-500/10 via-rose-500/10 to-transparent border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <div className="px-6 py-4 bg-[#30152F] border-b border-[#30152F]/10 dark:border-[#D9A441]/20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-red-500/20 text-red-600 dark:text-red-400 flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-2xl bg-[#D9A441] text-[#30152F] flex items-center justify-center font-black">
               !
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white font-display">
+              <h2 className="text-lg font-bold text-[#E8EDF2] font-display">
                 Report a Lost Item
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-[#E8EDF2]/70">
                 GNIOT Campus AI Lost &amp; Found Portal
               </p>
             </div>
           </div>
           <button
             onClick={resetAndClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+            className="p-2 rounded-xl text-[#E8EDF2]/70 hover:text-white hover:bg-white/10 transition-all"
           >
             <X className="w-5 h-5" />
           </button>
@@ -179,26 +179,26 @@ export const ReportLostModal: React.FC<ReportLostModalProps> = ({
 
         {/* Step Progress Indicators */}
         {step < 4 && (
-          <div className="px-6 pt-4 pb-2 flex items-center justify-between border-b border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-900/50">
+          <div className="px-6 pt-4 pb-2 flex items-center justify-between border-b border-[#30152F]/10 dark:border-[#D9A441]/20 bg-[#E8EDF2] dark:bg-[#240E23]">
             <div className="flex items-center gap-2">
-              <span className={`w-6 h-6 rounded-full text-xs font-semibold flex items-center justify-center ${step >= 1 ? 'bg-red-500 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'}`}>
+              <span className={`w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center ${step >= 1 ? 'bg-[#D9A441] text-[#30152F]' : 'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400'}`}>
                 1
               </span>
-              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Basic Info</span>
+              <span className="text-xs font-semibold text-[#30152F] dark:text-[#E8EDF2]">Basic Info</span>
             </div>
-            <div className="h-0.5 w-10 bg-slate-200 dark:bg-slate-800" />
+            <div className="h-0.5 w-10 bg-[#30152F]/15 dark:bg-[#D9A441]/30" />
             <div className="flex items-center gap-2">
-              <span className={`w-6 h-6 rounded-full text-xs font-semibold flex items-center justify-center ${step >= 2 ? 'bg-red-500 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'}`}>
+              <span className={`w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center ${step >= 2 ? 'bg-[#D9A441] text-[#30152F]' : 'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400'}`}>
                 2
               </span>
-              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Campus Location</span>
+              <span className="text-xs font-semibold text-[#30152F] dark:text-[#E8EDF2]">Campus Location</span>
             </div>
-            <div className="h-0.5 w-10 bg-slate-200 dark:bg-slate-800" />
+            <div className="h-0.5 w-10 bg-[#30152F]/15 dark:bg-[#D9A441]/30" />
             <div className="flex items-center gap-2">
-              <span className={`w-6 h-6 rounded-full text-xs font-semibold flex items-center justify-center ${step >= 3 ? 'bg-red-500 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'}`}>
+              <span className={`w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center ${step >= 3 ? 'bg-[#D9A441] text-[#30152F]' : 'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400'}`}>
                 3
               </span>
-              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Distinctive Clues</span>
+              <span className="text-xs font-semibold text-[#30152F] dark:text-[#E8EDF2]">Distinctive Clues</span>
             </div>
           </div>
         )}
@@ -518,7 +518,7 @@ export const ReportLostModal: React.FC<ReportLostModalProps> = ({
 
               <button
                 onClick={resetAndClose}
-                className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition-all"
+                className="w-full py-3 rounded-xl bg-[#D9A441] hover:bg-[#c99532] text-[#30152F] font-bold text-sm shadow-md transition-all"
               >
                 Done &amp; View in Dashboard
               </button>
@@ -528,12 +528,12 @@ export const ReportLostModal: React.FC<ReportLostModalProps> = ({
 
         {/* Footer Navigation */}
         {step < 4 && (
-          <div className="px-6 py-4 bg-slate-50 dark:bg-slate-900/80 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <div className="px-6 py-4 bg-[#E8EDF2]/90 dark:bg-[#240E23] border-t border-[#30152F]/10 dark:border-[#D9A441]/20 flex items-center justify-between">
             {step > 1 ? (
               <button
                 type="button"
                 onClick={() => setStep(step - 1)}
-                className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all flex items-center gap-1.5"
+                className="px-4 py-2 rounded-xl border border-[#30152F]/20 dark:border-[#D9A441]/30 text-xs font-semibold text-[#30152F] dark:text-[#E8EDF2] hover:bg-white dark:hover:bg-[#30152F] transition-all flex items-center gap-1.5"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 Back
@@ -544,7 +544,7 @@ export const ReportLostModal: React.FC<ReportLostModalProps> = ({
               <button
                 type="button"
                 onClick={() => setStep(step + 1)}
-                className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold shadow-md transition-all flex items-center gap-1.5"
+                className="px-5 py-2.5 rounded-xl bg-[#D9A441] hover:bg-[#c99532] text-[#30152F] text-xs font-bold shadow-md transition-all flex items-center gap-1.5"
               >
                 Next Step
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -554,13 +554,13 @@ export const ReportLostModal: React.FC<ReportLostModalProps> = ({
                 type="button"
                 disabled={isSubmitting}
                 onClick={handleSubmit}
-                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white text-xs font-semibold shadow-lg shadow-rose-600/30 transition-all flex items-center gap-2"
+                className="px-6 py-2.5 rounded-xl bg-[#D9A441] hover:bg-[#c99532] text-[#30152F] text-xs font-bold shadow-lg shadow-[#D9A441]/20 transition-all flex items-center gap-2"
               >
                 {isSubmitting ? (
                   <span>Submitting &amp; AI Scanning...</span>
                 ) : (
                   <>
-                    <Sparkles className="w-4 h-4" />
+                    <Sparkles className="w-4 h-4 text-[#30152F]" />
                     Submit Lost Report
                   </>
                 )}

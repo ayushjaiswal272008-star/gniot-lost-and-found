@@ -51,19 +51,19 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   return (
     <div className="space-y-6">
       {/* Profile Header Card */}
-      <div className="p-6 rounded-3xl glass-panel border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="p-6 rounded-3xl glass-panel border border-slate-300 dark:border-[#D9A441]/30 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 to-sky-500 text-white font-extrabold text-xl flex items-center justify-center shadow-md">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#30152F] via-[#481E46] to-[#D9A441] text-[#E8EDF2] font-extrabold text-xl flex items-center justify-center shadow-md">
             {currentUser.name.charAt(0)}
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white font-display">
+              <h2 className="text-xl font-bold text-[#30152F] dark:text-[#E8EDF2] font-display">
                 {currentUser.name}
               </h2>
               {currentUser.isEmailVerified ? (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[11px] font-semibold">
-                  <CheckCircle2 className="w-3 h-3" />
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#D9A441]/15 text-[#BE8B2C] dark:text-[#D9A441] border border-[#D9A441]/30 text-[11px] font-semibold">
+                  <CheckCircle2 className="w-3 h-3 text-[#D9A441]" />
                   Verified College Email
                 </span>
               ) : (
@@ -72,8 +72,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                 </span>
               )}
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Roll No: <span className="font-mono font-medium text-slate-700 dark:text-slate-300">{currentUser.rollNo}</span> • Dept: {currentUser.department} • GNIOT Greater Noida
+            <p className="text-xs text-slate-600 dark:text-[#E8EDF2]/70 mt-0.5">
+              Roll No: <span className="font-mono font-medium text-[#30152F] dark:text-[#E8EDF2]">{currentUser.rollNo}</span> • Dept: {currentUser.department} • GNIOT Greater Noida
             </p>
           </div>
         </div>
@@ -81,13 +81,13 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => onOpenReport('lost')}
-            className="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold text-xs transition-all shadow-md"
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#D9A441] to-[#C59132] hover:brightness-105 text-[#190918] font-bold text-xs transition-all shadow-md shadow-[#D9A441]/20"
           >
             + Report Lost
           </button>
           <button
             onClick={() => onOpenReport('found')}
-            className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition-all shadow-md"
+            className="px-4 py-2.5 rounded-xl bg-[#30152F] hover:bg-[#240E23] text-[#E8EDF2] font-semibold text-xs border border-[#D9A441]/40 transition-all shadow-md"
           >
             + Report Found
           </button>
@@ -95,13 +95,13 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto no-scrollbar">
+      <div className="flex items-center gap-2 border-b border-slate-300 dark:border-[#D9A441]/25 pb-2 overflow-x-auto no-scrollbar">
         <button
           onClick={() => setActiveTab('reports')}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 ${
             activeTab === 'reports'
-              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              ? 'bg-[#D9A441] text-[#190918] font-bold shadow-md shadow-[#D9A441]/25'
+              : 'text-[#30152F] dark:text-[#E8EDF2]/75 hover:bg-white dark:hover:bg-[#2B112A] hover:text-[#D9A441]'
           }`}
         >
           <FileText className="w-4 h-4" />
@@ -112,8 +112,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
           onClick={() => setActiveTab('matches')}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 ${
             activeTab === 'matches'
-              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              ? 'bg-[#D9A441] text-[#190918] font-bold shadow-md shadow-[#D9A441]/25'
+              : 'text-[#30152F] dark:text-[#E8EDF2]/75 hover:bg-white dark:hover:bg-[#2B112A] hover:text-[#D9A441]'
           }`}
         >
           <Sparkles className="w-4 h-4" />
@@ -124,8 +124,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
           onClick={() => setActiveTab('claims')}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 ${
             activeTab === 'claims'
-              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              ? 'bg-[#D9A441] text-[#190918] font-bold shadow-md shadow-[#D9A441]/25'
+              : 'text-[#30152F] dark:text-[#E8EDF2]/75 hover:bg-white dark:hover:bg-[#2B112A] hover:text-[#D9A441]'
           }`}
         >
           <ShieldCheck className="w-4 h-4" />
@@ -136,8 +136,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
           onClick={() => setActiveTab('notifications')}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 ${
             activeTab === 'notifications'
-              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              ? 'bg-[#D9A441] text-[#190918] font-bold shadow-md shadow-[#D9A441]/25'
+              : 'text-[#30152F] dark:text-[#E8EDF2]/75 hover:bg-white dark:hover:bg-[#2B112A] hover:text-[#D9A441]'
           }`}
         >
           <Bell className="w-4 h-4" />

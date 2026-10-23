@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { isBackendConfigured, getBackendBaseUrl } from '../services/apiConfig';
 import { 
   ShieldAlert, 
   CheckCircle2, 
@@ -52,14 +53,17 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const handlePasscodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (adminPasscode === 'ayush007') {
-      try {
-        await fetch('/api/admin/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password: adminPasscode })
-        });
-      } catch (err) {
-        // Continue with client auth
+      if (isBackendConfigured()) {
+        try {
+          const baseUrl = getBackendBaseUrl()!;
+          await fetch(`${baseUrl}/api/admin/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: adminPasscode })
+          });
+        } catch (err) {
+          // Continue with verified client auth
+        }
       }
       onLoginAdmin();
       setErrorMsg('');
@@ -95,40 +99,45 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
   if (!isAdmin) {
     return (
-      <div className="max-w-md mx-auto my-12 p-8 rounded-3xl glass-panel border border-slate-200 dark:border-slate-800 shadow-xl text-center space-y-6">
-        <div className="w-16 h-16 mx-auto rounded-3xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+      <div className="max-w-md mx-auto my-12 p-8 rounded-3xl glass-panel border border-slate-300 dark:border-[#D9A441]/30 shadow-2xl text-center space-y-6">
+        <div className="w-16 h-16 mx-auto rounded-3xl bg-[#D9A441]/10 text-[#D9A441] border border-[#D9A441]/30 flex items-center justify-center">
           <Lock className="w-8 h-8" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white font-display">
+          <h2 className="text-xl font-bold text-[#30152F] dark:text-[#E8EDF2] font-display">
             GNIOT Campus Authority Portal
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs text-slate-600 dark:text-[#E8EDF2]/70 mt-1">
             Access restricted to Security Officers, Chief Wardens, and Central Library lost-property administrators.
           </p>
         </div>
 
-        <form onSubmit={handlePasscodeSubmit} className="space-y-4">
-          <input
-            type="password"
-            placeholder="Enter admin password (ayush007)"
-            value={adminPasscode}
-            onChange={e => setAdminPasscode(e.target.value)}
-            className="w-full px-4 py-3 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono tracking-widest"
-          />
+        <form onSubmit={handlePasscodeSubmit} className="space-y-4 text-left">
+          <div>
+            <label className="block text-xs font-semibold text-[#30152F] dark:text-[#E8EDF2] mb-1.5">
+              Admin Password
+            </label>
+            <input
+              type="password"
+              placeholder="Enter your password"
+              value={adminPasscode}
+              onChange={e => setAdminPasscode(e.target.value)}
+              className="w-full px-4 py-3 rounded-2xl border border-slate-300 dark:border-[#D9A441]/30 bg-white dark:bg-[#2B112A] text-[#30152F] dark:text-[#E8EDF2] text-sm focus:outline-none focus:ring-2 focus:ring-[#D9A441]"
+            />
+          </div>
           {errorMsg && (
-            <p className="text-xs text-red-500 font-semibold">{errorMsg}</p>
+            <p className="text-xs text-rose-500 font-semibold">{errorMsg}</p>
           )}
           <button
             type="submit"
-            className="w-full py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all"
+            className="w-full py-3 rounded-2xl bg-gradient-to-r from-[#D9A441] to-[#C59132] hover:brightness-105 text-[#190918] font-bold text-sm shadow-lg shadow-[#D9A441]/25 transition-all"
           >
             Authenticate Admin
           </button>
         </form>
 
-        <p className="text-[11px] text-slate-400">
-          Admin Password: <span className="font-mono font-bold text-indigo-500">ayush007</span>
+        <p className="text-[11px] text-slate-500 dark:text-[#E8EDF2]/60">
+          Authorized personnel only. All access attempts are logged for campus security audit.
         </p>
       </div>
     );
@@ -148,15 +157,15 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="p-6 rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-indigo-900/50">
+      <div className="p-6 rounded-3xl bg-gradient-to-r from-[#30152F] via-[#481E46] to-[#240E23] text-[#E8EDF2] shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-[#D9A441]/30">
         <div>
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-            <h2 className="text-xl font-bold font-display">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#D9A441] animate-pulse" />
+            <h2 className="text-xl font-bold font-display text-[#E8EDF2]">
               GNIOT Security &amp; Administrative Console
             </h2>
           </div>
-          <p className="text-xs text-indigo-200 mt-1">
+          <p className="text-xs text-[#E8EDF2]/70 mt-1">
             Knowledge Park II Campus Registry • Chief Proctor &amp; Security Desk Level Permissions
           </p>
         </div>
@@ -164,14 +173,14 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         <div className="flex items-center gap-3">
           <button
             onClick={exportReportsCSV}
-            className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold text-xs transition-all flex items-center gap-2 backdrop-blur-md"
+            className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-[#E8EDF2] font-semibold text-xs transition-all flex items-center gap-2 backdrop-blur-md"
           >
-            <Download className="w-4 h-4" />
+            <Download className="w-4 h-4 text-[#D9A441]" />
             Export CSV
           </button>
           <button
             onClick={onLogoutAdmin}
-            className="px-4 py-2.5 rounded-xl bg-red-600/80 hover:bg-red-600 text-white font-semibold text-xs transition-all flex items-center gap-1.5"
+            className="px-4 py-2.5 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white font-semibold text-xs transition-all flex items-center gap-1.5"
           >
             <Lock className="w-3.5 h-3.5" />
             Exit Admin
@@ -180,13 +189,13 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
       </div>
 
       {/* Admin Nav Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto no-scrollbar">
+      <div className="flex items-center gap-2 border-b border-slate-300 dark:border-[#D9A441]/25 pb-2 overflow-x-auto no-scrollbar">
         <button
           onClick={() => setAdminTab('claims')}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 ${
             adminTab === 'claims'
-              ? 'bg-indigo-600 text-white shadow-md'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              ? 'bg-[#D9A441] text-[#190918] font-bold shadow-md shadow-[#D9A441]/25'
+              : 'text-[#30152F] dark:text-[#E8EDF2]/75 hover:bg-white dark:hover:bg-[#2B112A] hover:text-[#D9A441]'
           }`}
         >
           <ShieldAlert className="w-4 h-4" />
@@ -197,8 +206,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           onClick={() => setAdminTab('reports')}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 ${
             adminTab === 'reports'
-              ? 'bg-indigo-600 text-white shadow-md'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              ? 'bg-[#D9A441] text-[#190918] font-bold shadow-md shadow-[#D9A441]/25'
+              : 'text-[#30152F] dark:text-[#E8EDF2]/75 hover:bg-white dark:hover:bg-[#2B112A] hover:text-[#D9A441]'
           }`}
         >
           <FileText className="w-4 h-4" />
@@ -209,8 +218,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           onClick={() => setAdminTab('analytics')}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 ${
             adminTab === 'analytics'
-              ? 'bg-indigo-600 text-white shadow-md'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              ? 'bg-[#D9A441] text-[#190918] font-bold shadow-md shadow-[#D9A441]/25'
+              : 'text-[#30152F] dark:text-[#E8EDF2]/75 hover:bg-white dark:hover:bg-[#2B112A] hover:text-[#D9A441]'
           }`}
         >
           <BarChart3 className="w-4 h-4" />
@@ -221,8 +230,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           onClick={() => setAdminTab('audit')}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 ${
             adminTab === 'audit'
-              ? 'bg-indigo-600 text-white shadow-md'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              ? 'bg-[#D9A441] text-[#190918] font-bold shadow-md shadow-[#D9A441]/25'
+              : 'text-[#30152F] dark:text-[#E8EDF2]/75 hover:bg-white dark:hover:bg-[#2B112A] hover:text-[#D9A441]'
           }`}
         >
           <History className="w-4 h-4" />
@@ -233,13 +242,14 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           onClick={() => setAdminTab('locations')}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 ${
             adminTab === 'locations'
-              ? 'bg-indigo-600 text-white shadow-md'
-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              ? 'bg-[#D9A441] text-[#190918] font-bold shadow-md shadow-[#D9A441]/25'
+              : 'text-[#30152F] dark:text-[#E8EDF2]/75 hover:bg-white dark:hover:bg-[#2B112A] hover:text-[#D9A441]'
           }`}
         >
-          <Building2 className="w-4 h-4" />
+          <MapPin className="w-4 h-4" />
           Campus Desks ({campusLocations.length})
         </button>
+
       </div>
 
       {/* Tab 1: Claims Review */}

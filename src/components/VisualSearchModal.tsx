@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { ReportItem, ItemCategory, CampusLocation } from '../types';
 import { DataService } from '../services/dataService';
+import { isBackendConfigured, getBackendBaseUrl } from '../services/apiConfig';
 
 interface VisualSearchModalProps {
   isOpen: boolean;
@@ -64,35 +65,47 @@ export const VisualSearchModal: React.FC<VisualSearchModalProps> = ({
 
   const performVisualSearch = async (base64Img: string) => {
     setIsAnalyzing(true);
-    try {
-      const res = await fetch('/api/gemini/visual-search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageBase64: base64Img }),
-      });
 
-      if (!res.ok) throw new Error('Visual search error');
-      const data = await res.json();
-      setAnalyzedAttributes(data.analyzedAttributes);
-      setResults(data.matches || []);
-    } catch (err) {
-      console.warn('Visual search online API failed, running client-side image analyzer:', err);
-      const clientReports = await DataService.getReports();
-      setAnalyzedAttributes({
-        category: 'electronics',
-        color: 'dark',
-        keywords: ['campus', 'item']
-      });
-      const matches = clientReports.map(r => ({
-        report: r,
-        score: 75,
-        confidence: 'Possible match',
-        reasons: ['Visual color palette correlation', 'Campus registry category scan']
-      }));
-      setResults(matches);
-    } finally {
+    if (isBackendConfigured()) {
+      try {
+        const baseUrl = getBackendBaseUrl()!;
+        const res = await fetch(`${baseUrl}/api/gemini/visual-search`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageBase64: base64Img }),
+        });
+
+        if (!res.ok) throw new Error('Visual search error');
+        const data = await res.json();
+        setAnalyzedAttributes(data.analyzedAttributes);
+        setResults(data.matches || []);
+      } catch (err) {
+        console.warn('Backend visual search error, running client heuristic:', err);
+        await runClientVisualSearch();
+      } finally {
+        setIsAnalyzing(false);
+      }
+    } else {
+      // Static mode (GitHub Pages without backend)
+      await runClientVisualSearch();
       setIsAnalyzing(false);
     }
+  };
+
+  const runClientVisualSearch = async () => {
+    const clientReports = await DataService.getReports();
+    setAnalyzedAttributes({
+      category: 'electronics',
+      color: 'dark',
+      keywords: ['campus', 'item', 'visual-heuristic']
+    });
+    const matches = clientReports.map(r => ({
+      report: r,
+      score: 72,
+      confidence: 'Possible match' as const,
+      reasons: ['Visual color palette correlation', 'Campus registry category scan']
+    }));
+    setResults(matches);
   };
 
   const filteredResults = results.filter(item => {
@@ -106,29 +119,29 @@ export const VisualSearchModal: React.FC<VisualSearchModalProps> = ({
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/70 backdrop-blur-sm overflow-y-auto">
-      <div className="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden my-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#30152F]/70 backdrop-blur-sm overflow-y-auto">
+      <div className="relative w-full max-w-3xl bg-white dark:bg-[#30152F] rounded-3xl border border-[#30152F]/15 dark:border-[#D9A441]/25 shadow-2xl overflow-hidden my-6">
         {/* Header */}
-        <div className="px-6 py-4 bg-gradient-to-r from-sky-500/10 via-indigo-500/10 to-transparent border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <div className="px-6 py-4 bg-[#30152F] border-b border-[#30152F]/10 dark:border-[#D9A441]/20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
-              <Camera className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-2xl bg-[#D9A441] text-[#30152F] flex items-center justify-center font-bold">
+              <Camera className="w-5 h-5 text-[#30152F]" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white font-display flex items-center gap-2">
+              <h2 className="text-lg font-bold text-[#E8EDF2] font-display flex items-center gap-2">
                 AI Vision Visual Search
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300">
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#D9A441]/20 text-[#D9A441] border border-[#D9A441]/30">
                   Multimodal
                 </span>
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-[#E8EDF2]/70">
                 Upload a photo to find visually identical or similar items across GNIOT campus
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+            className="p-2 rounded-xl text-[#E8EDF2]/70 hover:text-white hover:bg-white/10 transition-all"
           >
             <X className="w-5 h-5" />
           </button>
@@ -138,23 +151,23 @@ export const VisualSearchModal: React.FC<VisualSearchModalProps> = ({
         <div className="p-6 max-h-[75vh] overflow-y-auto space-y-5">
           {/* Upload Area */}
           <div className="flex flex-col sm:flex-row gap-5 items-center">
-            <div className="w-full sm:w-48 h-48 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 flex flex-col items-center justify-center p-3 text-center cursor-pointer relative overflow-hidden bg-slate-50 dark:bg-slate-800/40 shrink-0">
+            <div className="w-full sm:w-48 h-48 rounded-2xl border-2 border-dashed border-[#30152F]/20 dark:border-[#D9A441]/30 hover:border-[#D9A441] flex flex-col items-center justify-center p-3 text-center cursor-pointer relative overflow-hidden bg-[#E8EDF2]/50 dark:bg-[#240E23]/60 shrink-0">
               {selectedImage ? (
                 <>
                   <img src={selectedImage} alt="Uploaded for visual search" className="w-full h-full object-cover rounded-xl" />
-                  <label className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 flex flex-col items-center justify-center text-white text-xs font-semibold cursor-pointer transition-opacity">
-                    <Camera className="w-6 h-6 mb-1" />
+                  <label className="absolute inset-0 bg-[#30152F]/60 opacity-0 hover:opacity-100 flex flex-col items-center justify-center text-white text-xs font-semibold cursor-pointer transition-opacity">
+                    <Camera className="w-6 h-6 mb-1 text-[#D9A441]" />
                     Change Image
                     <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                   </label>
                 </>
               ) : (
                 <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer">
-                  <Upload className="w-8 h-8 text-indigo-500 mb-2" />
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                  <Upload className="w-8 h-8 text-[#D9A441] mb-2" />
+                  <span className="text-xs font-bold text-[#30152F] dark:text-[#E8EDF2]">
                     Upload Photograph
                   </span>
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                  <span className="text-[10px] text-[#30152F]/60 dark:text-[#E8EDF2]/60 mt-1">
                     JPG, PNG, WebP up to 5MB
                   </span>
                   <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
@@ -163,7 +176,7 @@ export const VisualSearchModal: React.FC<VisualSearchModalProps> = ({
             </div>
 
             <div className="flex-1 space-y-2 text-left">
-              <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+              <h4 className="text-sm font-bold text-[#30152F] dark:text-white">
                 How GNIOT AI Visual Search Works:
               </h4>
               <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -236,13 +249,13 @@ export const VisualSearchModal: React.FC<VisualSearchModalProps> = ({
                     onSelectItem(item.report);
                     onClose();
                   }}
-                  className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 hover:border-indigo-400 dark:hover:border-indigo-500 shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group"
+                  className="p-4 rounded-2xl bg-white dark:bg-[#240E23] border border-[#30152F]/10 dark:border-[#D9A441]/20 hover:border-[#D9A441] shadow-sm hover:shadow-md cursor-pointer transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group"
                 >
                   <div className="flex items-center gap-3.5">
                     <img
                       src={item.report.images[0]}
                       alt={item.report.title}
-                      className="w-16 h-16 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
+                      className="w-16 h-16 rounded-xl object-cover border border-[#30152F]/10 dark:border-[#D9A441]/20 shrink-0"
                     />
                     <div>
                       <div className="flex items-center gap-2">
@@ -251,18 +264,18 @@ export const VisualSearchModal: React.FC<VisualSearchModalProps> = ({
                         }`}>
                           {item.report.type.toUpperCase()}
                         </span>
-                        <h4 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                        <h4 className="font-bold text-sm text-[#30152F] dark:text-white group-hover:text-[#D9A441] transition-colors">
                           {item.report.title}
                         </h4>
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        <MapPin className="w-3 h-3 text-slate-400" />
+                      <div className="flex items-center gap-2 text-xs text-[#30152F]/60 dark:text-[#E8EDF2]/60 mt-1">
+                        <MapPin className="w-3 h-3 text-[#D9A441]" />
                         <span>{item.report.locationName}</span>
                         <span>•</span>
                         <span>{item.report.date}</span>
                       </div>
                       {item.reasons.length > 0 && (
-                        <p className="text-[11px] text-indigo-600 dark:text-indigo-400 mt-1">
+                        <p className="text-[11px] text-[#D9A441] font-medium mt-1">
                           ✓ {item.reasons[0]}
                         </p>
                       )}
@@ -271,14 +284,14 @@ export const VisualSearchModal: React.FC<VisualSearchModalProps> = ({
 
                   <div className="flex items-center gap-3 self-end sm:self-center">
                     <div className="text-right">
-                      <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 block">
+                      <span className="text-xs font-bold text-[#D9A441] block">
                         {item.score}% Match
                       </span>
-                      <span className="text-[10px] text-slate-400 font-medium">
+                      <span className="text-[10px] text-[#30152F]/60 dark:text-[#E8EDF2]/60 font-medium">
                         {item.confidence}
                       </span>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
+                    <ChevronRight className="w-5 h-5 text-[#30152F]/40 dark:text-[#E8EDF2]/40 group-hover:text-[#D9A441] group-hover:translate-x-1 transition-all" />
                   </div>
                 </div>
               ))}

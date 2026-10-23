@@ -117,26 +117,26 @@ export const SearchPage: React.FC<SearchPageProps> = ({
   return (
     <div className="space-y-6">
       {/* Top Search Controls Bar */}
-      <div className="p-4 sm:p-6 rounded-3xl glass-panel shadow-sm border border-slate-200 dark:border-slate-800 space-y-4">
+      <div className="p-4 sm:p-6 rounded-3xl glass-panel shadow-sm border border-slate-300 dark:border-[#D9A441]/25 space-y-4">
         <div className="flex flex-col sm:flex-row gap-3">
           {/* Main Search Input */}
           <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#D9A441]" />
             <input
               type="text"
               value={query}
               onChange={e => setQuery(e.target.value)}
               placeholder="Search by keywords, model, color, report ID, campus location..."
-              className="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900/90 text-slate-900 dark:text-white text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-inner"
+              className="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-slate-300 dark:border-[#D9A441]/25 bg-white dark:bg-[#2B112A] text-[#30152F] dark:text-[#E8EDF2] text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[#D9A441] shadow-inner"
             />
           </div>
 
           {/* AI Visual Search Button */}
           <button
             onClick={onOpenVisualSearch}
-            className="px-5 py-3.5 rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-semibold text-sm shadow-md shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 shrink-0"
+            className="px-5 py-3.5 rounded-2xl bg-gradient-to-r from-[#D9A441] to-[#C59132] hover:brightness-105 text-[#190918] font-bold text-sm shadow-md shadow-[#D9A441]/20 transition-all flex items-center justify-center gap-2 shrink-0"
           >
-            <Camera className="w-4 h-4" />
+            <Camera className="w-4 h-4 text-[#190918]" />
             <span>AI Visual Search</span>
           </button>
 
@@ -145,7 +145,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({
             <button
               onClick={handleSaveSearch}
               title="Save current search"
-              className="p-3.5 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:text-indigo-600 transition-all shrink-0 flex items-center gap-1.5 text-xs font-semibold"
+              className="p-3.5 rounded-2xl border border-slate-300 dark:border-[#D9A441]/25 bg-white dark:bg-[#2B112A] text-[#30152F] dark:text-[#E8EDF2] hover:text-[#D9A441] transition-all shrink-0 flex items-center gap-1.5 text-xs font-semibold"
             >
               <Bookmark className="w-4 h-4" />
               <span className="hidden md:inline">Save</span>

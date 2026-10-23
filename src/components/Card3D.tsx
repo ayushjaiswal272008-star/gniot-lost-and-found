@@ -67,7 +67,7 @@ export const Card3D: React.FC<Card3DProps> = ({
           <div
             className="pointer-events-none absolute inset-0 transition-opacity duration-300"
             style={{
-              background: `radial-gradient(circle at ${glarePosition.x}% ${glarePosition.y}%, rgba(255,255,255,${glarePosition.opacity}), transparent 60%)`,
+              background: `radial-gradient(circle at ${glarePosition.x}% ${glarePosition.y}%, rgba(217,164,65,${glarePosition.opacity * 1.5}), transparent 60%)`,
             }}
           />
         )}

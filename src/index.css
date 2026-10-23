@@ -1,9 +1,32 @@
 @import "tailwindcss";
 
+@theme {
+  --color-ice-silver: #E8EDF2;
+  --color-ice-silver-50: #F8FAFC;
+  --color-ice-silver-100: #E8EDF2;
+  --color-ice-silver-200: #D5DEE7;
+  --color-ice-silver-300: #BDCDDC;
+  
+  --color-deep-aubergine: #30152F;
+  --color-aubergine-950: #190918;
+  --color-aubergine-900: #240E23;
+  --color-aubergine-850: #2B112A;
+  --color-aubergine-800: #30152F;
+  --color-aubergine-700: #481E46;
+  --color-aubergine-600: #652C63;
+  
+  --color-marigold: #D9A441;
+  --color-marigold-hover: #C6912E;
+  --color-marigold-light: #F2C770;
+  --color-marigold-dark: #9F7320;
+}
+
 @layer base {
   :root {
     --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     --font-display: 'Space Grotesk', system-ui, sans-serif;
+    --bg-primary: #E8EDF2;
+    --text-primary: #30152F;
   }
 
   body {
@@ -11,6 +34,13 @@
     margin: 0;
     padding: 0;
     overflow-x: hidden;
+    background-color: #E8EDF2;
+    color: #30152F;
+  }
+
+  .dark body {
+    background-color: #190918;
+    color: #E8EDF2;
   }
 }
 
@@ -18,50 +48,52 @@
   font-family: var(--font-display);
 }
 
-/* Futuristic background glow & patterns */
+/* Premium campus grid background */
 .cyber-grid {
   background-size: 36px 36px;
   background-image: 
-    linear-gradient(to right, rgba(99, 102, 241, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(99, 102, 241, 0.05) 1px, transparent 1px);
+    linear-gradient(to right, rgba(48, 21, 47, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(48, 21, 47, 0.05) 1px, transparent 1px);
 }
 
 .dark .cyber-grid {
   background-image: 
-    linear-gradient(to right, rgba(147, 197, 253, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(147, 197, 253, 0.04) 1px, transparent 1px);
+    linear-gradient(to right, rgba(217, 164, 65, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(217, 164, 65, 0.06) 1px, transparent 1px);
 }
 
-/* Glassmorphism */
+/* Polished Glassmorphism */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(226, 232, 240, 0.8);
+  background: rgba(232, 237, 242, 0.85);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(48, 21, 47, 0.1);
+  box-shadow: 0 10px 30px -10px rgba(48, 21, 47, 0.08);
 }
 
 .dark .glass-panel {
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(36, 14, 35, 0.88);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(217, 164, 65, 0.18);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(226, 232, 240, 0.7);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(213, 222, 231, 0.9);
+  box-shadow: 0 8px 24px 0 rgba(48, 21, 47, 0.06);
 }
 
 .dark .glass-card {
-  background: rgba(30, 41, 59, 0.6);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  background: rgba(43, 17, 42, 0.85);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(217, 164, 65, 0.14);
+  box-shadow: 0 8px 30px 0 rgba(0, 0, 0, 0.45);
 }
 
-/* Custom scrollbars */
+/* Custom premium scrollbars */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -70,9 +102,9 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.4);
+  background: rgba(217, 164, 65, 0.35);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.6);
+  background: rgba(217, 164, 65, 0.6);
 }

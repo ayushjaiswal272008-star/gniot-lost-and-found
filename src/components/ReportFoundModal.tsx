@@ -137,26 +137,26 @@ export const ReportFoundModal: React.FC<ReportFoundModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/70 backdrop-blur-sm overflow-y-auto">
-      <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden my-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#30152F]/70 backdrop-blur-sm overflow-y-auto">
+      <div className="relative w-full max-w-2xl bg-white dark:bg-[#30152F] rounded-3xl border border-[#30152F]/15 dark:border-[#D9A441]/25 shadow-2xl overflow-hidden my-6">
         {/* Header */}
-        <div className="px-6 py-4 bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-transparent border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <div className="px-6 py-4 bg-[#30152F] border-b border-[#30152F]/10 dark:border-[#D9A441]/20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-2xl bg-[#D9A441] text-[#30152F] flex items-center justify-center font-black">
               ✓
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white font-display">
+              <h2 className="text-lg font-bold text-[#E8EDF2] font-display">
                 Report a Found Item
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-[#E8EDF2]/70">
                 Help return an item to a fellow GNIOT student
               </p>
             </div>
           </div>
           <button
             onClick={resetAndClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+            className="p-2 rounded-xl text-[#E8EDF2]/70 hover:text-white hover:bg-white/10 transition-all"
           >
             <X className="w-5 h-5" />
           </button>
@@ -342,13 +342,13 @@ export const ReportFoundModal: React.FC<ReportFoundModalProps> = ({
                   type="button"
                   disabled={isSubmitting}
                   onClick={handleSubmit}
-                  className="w-full py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold text-sm shadow-lg shadow-emerald-600/30 transition-all flex items-center justify-center gap-2"
+                  className="w-full py-3 rounded-2xl bg-[#D9A441] hover:bg-[#c99532] text-[#30152F] font-bold text-sm shadow-lg shadow-[#D9A441]/20 transition-all flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
                     <span>Registering with Campus Registry...</span>
                   ) : (
                     <>
-                      <Sparkles className="w-4 h-4" />
+                      <Sparkles className="w-4 h-4 text-[#30152F]" />
                       Submit Found Report
                     </>
                   )}
@@ -357,24 +357,24 @@ export const ReportFoundModal: React.FC<ReportFoundModalProps> = ({
             </>
           ) : (
             <div className="text-center py-6 space-y-4">
-              <div className="w-16 h-16 mx-auto rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+              <div className="w-16 h-16 mx-auto rounded-full bg-[#D9A441]/20 text-[#D9A441] flex items-center justify-center">
                 <CheckCircle2 className="w-8 h-8" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white font-display">
+                <h3 className="text-xl font-bold text-[#30152F] dark:text-white font-display">
                   Found Item Registered!
                 </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
-                  Report ID: <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{createdReport.id}</span>
+                <p className="text-sm text-[#30152F]/80 dark:text-[#E8EDF2]/80 mt-1">
+                  Report ID: <span className="font-mono font-bold text-[#D9A441]">{createdReport.id}</span>
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 max-w-md mx-auto">
+                <p className="text-xs text-[#30152F]/60 dark:text-[#E8EDF2]/60 mt-2 max-w-md mx-auto">
                   Thank you for contributing to campus integrity! The AI matching engine has matched this against existing lost reports and notified students who lost similar items.
                 </p>
               </div>
 
               <button
                 onClick={resetAndClose}
-                className="w-full py-3 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-semibold text-sm transition-all"
+                className="w-full py-3 rounded-xl bg-[#30152F] hover:bg-[#240E23] text-[#D9A441] font-bold text-sm border border-[#D9A441]/30 transition-all"
               >
                 Close &amp; Return to Campus
               </button>
