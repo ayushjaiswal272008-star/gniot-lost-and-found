@@ -24,7 +24,10 @@ import {
   Mail,
   Zap,
   Cpu,
-  AlertCircle
+  AlertCircle,
+  LogIn,
+  LogOut,
+  UserCheck
 } from 'lucide-react';
 import { 
   ReportItem, 
@@ -45,12 +48,15 @@ import { AIAssistantChat } from './components/AIAssistantChat';
 import { SearchPage } from './components/SearchPage';
 import { StudentDashboard } from './components/StudentDashboard';
 import { AdminPortal } from './components/AdminPortal';
+import { AuthModal } from './components/AuthModal';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { testSupabaseConnection } from './lib/supabase';
 import { INITIAL_CAMPUS_LOCATIONS } from './data/campusData';
 import { DataService } from './services/dataService';
 import { isSupabaseConfigured } from './services/supabaseClient';
 import { isBackendConfigured } from './services/apiConfig';
 
-export default function App() {
+function MainApp() {
   // Theme state
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     return localStorage.getItem('gniot_theme') === 'dark' || 
@@ -75,16 +81,35 @@ export default function App() {
     recoveryRatePercent: 0
   });
 
-  // User session
-  const [currentUser] = useState({
-    id: 'user-ayush',
-    name: 'Ayush Jaiswal',
-    email: 'ayushjaiswal272008@gmail.com',
-    rollNo: '240133010001',
-    department: 'Computer Science & Engineering',
-    isEmailVerified: true
-  });
+  // Supabase Auth & Session
+  const { user, profile, isAuthenticated, isAdmin: isUserAdmin, signOut, isConfigured } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup' | 'forgot'>('signin');
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [dbStatus, setDbStatus] = useState<{ connected: boolean; message: string; tableCount?: number } | null>(null);
+
+  // Sync admin state with auth profile role
+  useEffect(() => {
+    if (isUserAdmin) {
+      setIsAdmin(true);
+    }
+  }, [isUserAdmin]);
+
+  // Check Supabase DB connectivity
+  useEffect(() => {
+    testSupabaseConnection().then(res => setDbStatus(res));
+  }, []);
+
+  // Compute active user profile for modals and components
+  const currentUser = {
+    id: user?.id || 'guest-user',
+    name: profile?.name || profile?.fullName || user?.user_metadata?.full_name || (isAuthenticated ? 'GNIOT Student' : 'Ayush Jaiswal'),
+    email: user?.email || (isAuthenticated ? 'student@gniot.net.in' : 'ayushjaiswal272008@gmail.com'),
+    rollNo: profile?.rollNo || '240133010001',
+    department: profile?.department || 'Computer Science & Engineering',
+    isEmailVerified: Boolean(user?.email_confirmed_at || profile?.isEmailVerified)
+  };
 
   // Modals state
   const [isLostModalOpen, setIsLostModalOpen] = useState(false);
@@ -130,7 +155,7 @@ export default function App() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [user?.id]);
 
   // Handlers
   const handleReportCreated = (newReport: ReportItem, newMatches: AIMatchResult[]) => {
@@ -173,6 +198,16 @@ export default function App() {
     }
   };
 
+  const handleDeleteReport = async (reportId: string) => {
+    try {
+      await DataService.deleteReport(reportId);
+      setReports(prev => prev.filter(r => r.id !== reportId));
+      await fetchData();
+    } catch (err: any) {
+      alert(err.message || 'Error deleting report');
+    }
+  };
+
   const handleQuickSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (quickSearchInput.trim()) {
@@ -208,10 +243,15 @@ export default function App() {
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#D9A441]/15 text-[#30152F] dark:text-[#D9A441] border border-[#D9A441]/30 hidden sm:inline">
                   Greater Noida
                 </span>
-                {isSupabaseConfigured ? (
-                  <span title="Connected to Supabase PostgreSQL Database" className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                {dbStatus?.connected ? (
+                  <span title={`Connected to Supabase PostgreSQL Database (${dbStatus.message})`} className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span className="hidden lg:inline">Supabase</span>
+                    <span className="hidden lg:inline">Supabase Live</span>
+                  </span>
+                ) : isSupabaseConfigured ? (
+                  <span title={dbStatus?.message || "Supabase configuration active"} className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                    <span className="hidden lg:inline">Supabase Connecting</span>
                   </span>
                 ) : isBackendConfigured() ? (
                   <span title="Connected to Express API Server" className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#D9A441]/15 text-[#30152F] dark:text-[#D9A441] border border-[#D9A441]/30 flex items-center gap-1">
@@ -219,7 +259,7 @@ export default function App() {
                     <span className="hidden lg:inline">API Sync</span>
                   </span>
                 ) : (
-                  <span title="Running in static mode on GitHub Pages. Connect Supabase or Express backend for multi-user database." className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#30152F]/10 dark:bg-white/10 text-[#30152F]/70 dark:text-[#E8EDF2]/70 border border-[#30152F]/20 dark:border-white/20 flex items-center gap-1">
+                  <span title="Running in static mode on GitHub Pages. Connect Supabase for cloud database." className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#30152F]/10 dark:bg-white/10 text-[#30152F]/70 dark:text-[#E8EDF2]/70 border border-[#30152F]/20 dark:border-white/20 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
                     <span className="hidden lg:inline">Static Mode</span>
                   </span>
@@ -286,6 +326,78 @@ export default function App() {
               <Camera className="w-4 h-4 text-[#D9A441]" />
               <span className="hidden sm:inline">Vision Search</span>
             </button>
+
+            {/* Auth Button or User Avatar Dropdown */}
+            {isAuthenticated ? (
+              <div className="relative">
+                <button
+                  onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                  className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-white/70 dark:bg-[#2B112A] hover:bg-white dark:hover:bg-[#391738] border border-slate-300 dark:border-[#D9A441]/30 transition-all text-xs font-semibold shadow-xs"
+                >
+                  <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-[#30152F] to-[#D9A441] text-[#E8EDF2] font-bold flex items-center justify-center text-[11px] shadow-xs">
+                    {currentUser.name.charAt(0)}
+                  </div>
+                  <span className="hidden md:inline text-xs font-semibold max-w-[100px] truncate text-[#30152F] dark:text-[#E8EDF2]">
+                    {currentUser.name.split(' ')[0]}
+                  </span>
+                </button>
+
+                {userDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-56 p-2 rounded-2xl glass-panel shadow-2xl border border-slate-300 dark:border-[#D9A441]/30 bg-white dark:bg-[#30152F] z-50 animate-in fade-in zoom-in-95">
+                    <div className="px-3 py-2 border-b border-slate-200 dark:border-white/10 mb-1">
+                      <p className="text-xs font-bold text-[#30152F] dark:text-[#E8EDF2] truncate">{currentUser.name}</p>
+                      <p className="text-[11px] text-slate-500 dark:text-[#E8EDF2]/70 truncate">{currentUser.email}</p>
+                      <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full bg-[#D9A441]/20 text-[#BE8B2C] dark:text-[#D9A441] font-semibold">
+                        {isUserAdmin ? 'Campus Admin' : 'Student'}
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setCurrentNav('dashboard');
+                        setUserDropdownOpen(false);
+                      }}
+                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold hover:bg-slate-100 dark:hover:bg-[#240E23] text-[#30152F] dark:text-[#E8EDF2] flex items-center gap-2"
+                    >
+                      <User className="w-4 h-4 text-[#D9A441]" />
+                      My Dashboard
+                    </button>
+
+                    <button
+                      onClick={async () => {
+                        await signOut();
+                        setUserDropdownOpen(false);
+                      }}
+                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-500/10 flex items-center gap-2 transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => {
+                    setAuthModalMode('signin');
+                    setIsAuthModalOpen(true);
+                  }}
+                  className="px-3 py-2 rounded-xl text-xs font-bold text-[#30152F] dark:text-[#E8EDF2] hover:text-[#D9A441] transition-colors"
+                >
+                  Sign In
+                </button>
+                <button
+                  onClick={() => {
+                    setAuthModalMode('signup');
+                    setIsAuthModalOpen(true);
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#D9A441] to-[#C59132] text-[#190918] text-xs font-bold shadow-md shadow-[#D9A441]/20 hover:brightness-105 transition-all hidden sm:inline-flex"
+                >
+                  Sign Up
+                </button>
+              </div>
+            )}
 
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
@@ -721,6 +833,12 @@ export default function App() {
                 if (type === 'lost') setIsLostModalOpen(true);
                 else setIsFoundModalOpen(true);
               }}
+              onDeleteReport={handleDeleteReport}
+              isAuthenticated={isAuthenticated}
+              onOpenAuth={() => {
+                setAuthModalMode('signin');
+                setIsAuthModalOpen(true);
+              }}
             />
           </div>
         )}
@@ -798,6 +916,12 @@ export default function App() {
         onClaimSubmitted={handleClaimSubmitted}
       />
 
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        initialMode={authModalMode}
+      />
+
       {/* Premium Footer */}
       <footer className="mt-20 border-t border-[#30152F]/15 dark:border-[#D9A441]/20 bg-[#30152F] text-[#E8EDF2]/80 py-12 text-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
@@ -866,5 +990,13 @@ export default function App() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <MainApp />
+    </AuthProvider>
   );
 }

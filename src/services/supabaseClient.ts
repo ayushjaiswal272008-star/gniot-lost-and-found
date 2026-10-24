@@ -1,20 +1,9 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
-
-const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim();
-const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
-
-export const isSupabaseConfigured = Boolean(
-  supabaseUrl && 
-  supabaseAnonKey && 
-  supabaseUrl.startsWith('https://') &&
-  supabaseAnonKey.length > 20
-);
-
-export const supabase: SupabaseClient | null = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-      },
-    })
-  : null;
+// Re-export unified Supabase client from src/lib/supabase.ts
+export {
+  supabase,
+  isSupabaseConfigured,
+  supabaseUrl,
+  supabaseAnonKey,
+  testSupabaseConnection,
+  uploadItemImage,
+} from '../lib/supabase';

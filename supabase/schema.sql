@@ -1,12 +1,55 @@
 -- =========================================================================
--- GNIOT Lost & Found AI - Supabase Database Schema & Security Policies
--- Run this script in your Supabase SQL Editor (https://supabase.com/dashboard)
+-- GNIOT Lost & Found AI - Complete Supabase Database Schema & Security
+-- Run this in your Supabase SQL Editor: https://supabase.com/dashboard/project/yvdztwjlikuzozkhplcb/sql
 -- =========================================================================
 
--- Enable pgcrypto for UUID generation if needed
+-- Enable pgcrypto
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- 1. Campus Locations Table
+-- -------------------------------------------------------------------------
+-- 1. PROFILES TABLE (Linked with Supabase auth.users)
+-- -------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  full_name TEXT NOT NULL,
+  college_email TEXT,
+  roll_no TEXT,
+  department TEXT DEFAULT 'Computer Science & Engineering',
+  avatar_url TEXT,
+  role TEXT DEFAULT 'student' CHECK (role IN ('student', 'admin')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Trigger to automatically populate profile when a user registers
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, full_name, college_email, roll_no, department, role)
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1)),
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'roll_no', ''),
+    COALESCE(NEW.raw_user_meta_data->>'department', 'Computer Science & Engineering'),
+    COALESCE(NEW.raw_user_meta_data->>'role', 'student')
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    full_name = EXCLUDED.full_name,
+    college_email = EXCLUDED.college_email,
+    updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- -------------------------------------------------------------------------
+-- 2. CAMPUS LOCATIONS TABLE
+-- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.campus_locations (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -18,7 +61,9 @@ CREATE TABLE IF NOT EXISTS public.campus_locations (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 2. Reports Table (Lost and Found Items)
+-- -------------------------------------------------------------------------
+-- 3. REPORTS TABLE (Lost & Found Items)
+-- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.reports (
   id TEXT PRIMARY KEY,
   type TEXT NOT NULL CHECK (type IN ('lost', 'found')),
@@ -49,7 +94,9 @@ CREATE TABLE IF NOT EXISTS public.reports (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 3. Ownership Claims Table
+-- -------------------------------------------------------------------------
+-- 4. CLAIMS TABLE
+-- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.claims (
   id TEXT PRIMARY KEY,
   report_id TEXT NOT NULL REFERENCES public.reports(id) ON DELETE CASCADE,
@@ -64,13 +111,15 @@ CREATE TABLE IF NOT EXISTS public.claims (
   distinctive_mark_answer TEXT,
   serial_number_or_id_clue TEXT,
   uploaded_proof_image TEXT,
-  status TEXT NOT NULL DEFAULT 'Verification Pending' CHECK (status IN ('Verification Pending', 'Approved', 'Rejected', 'Resolved')),
+  status TEXT NOT NULL DEFAULT 'Verification Pending' CHECK (status IN ('Claim Pending', 'Verification Pending', 'Approved', 'Rejected', 'Resolved')),
   admin_notes TEXT,
   resolved_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 4. AI Match Results Table
+-- -------------------------------------------------------------------------
+-- 5. AI MATCHES TABLE
+-- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.ai_matches (
   id TEXT PRIMARY KEY,
   lost_report_id TEXT NOT NULL REFERENCES public.reports(id) ON DELETE CASCADE,
@@ -83,23 +132,27 @@ CREATE TABLE IF NOT EXISTS public.ai_matches (
   visual_score INTEGER,
   semantic_score INTEGER,
   location_proximity_score INTEGER,
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected')),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected', 'dismissed')),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 5. Notifications Table
+-- -------------------------------------------------------------------------
+-- 6. NOTIFICATIONS TABLE
+-- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.notifications (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL,
   title TEXT NOT NULL,
   message TEXT NOT NULL,
-  type TEXT NOT NULL CHECK (type IN ('match', 'claim', 'status', 'desk')),
+  type TEXT NOT NULL CHECK (type IN ('match', 'claim', 'status', 'desk', 'system')),
   report_id TEXT REFERENCES public.reports(id) ON DELETE CASCADE,
   is_read BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 6. Audit Logs Table (Admin Security Tracking)
+-- -------------------------------------------------------------------------
+-- 7. AUDIT LOGS TABLE
+-- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.audit_logs (
   id TEXT PRIMARY KEY,
   action TEXT NOT NULL,
@@ -109,10 +162,27 @@ CREATE TABLE IF NOT EXISTS public.audit_logs (
   timestamp TIMESTAMPTZ DEFAULT NOW()
 );
 
--- =========================================================================
--- ROW LEVEL SECURITY (RLS) POLICIES
--- =========================================================================
+-- -------------------------------------------------------------------------
+-- SEED INITIAL CAMPUS LOCATIONS
+-- -------------------------------------------------------------------------
+INSERT INTO public.campus_locations (id, name, code, zone, description, desk_contact, is_active)
+VALUES
+  ('loc-1', 'Main Academic Block (APJ Kalam Block)', 'MAB', 'Academic', 'Central administrative offices, lecture halls 101-315, and dean office', 'Ground Floor Reception Desk (+91 120 232xxxx)', true),
+  ('loc-2', 'GNIOT Central Library', 'LIB', 'Academic', 'Floors 1-3, Reference section, Reading hall, Digital library', 'Circulation Desk Counter 2', true),
+  ('loc-3', 'GNIOT Campus Central Canteen & Nescafe', 'CAN', 'Dining', 'Student cafeteria, outdoor patio, Nescafe kiosk', 'Canteen Supervisor Counter', true),
+  ('loc-4', 'Computer Science & AI Tech Labs (Block B)', 'CS-LAB', 'Academic', 'High-performance computing labs, AI/ML center, Robotics lab', 'Lab Technician Office, Lab 204', true),
+  ('loc-5', 'Mechanical & Civil Engineering Workshops', 'MECH-WS', 'Academic', 'Foundry, CNC lab, drafting rooms, heavy machines bay', 'Workshop Superintendent Cabin', true),
+  ('loc-6', 'Auditorium & Seminar Hall Complex', 'AUD', 'Administrative', '800-seater main auditorium, conference room 1 & 2', 'Event Management Office', true),
+  ('loc-7', 'Boys Hostel Complex (Sarojini & Raman)', 'BH-1', 'Residential', 'Rooms, common mess, badminton court, reading room', 'Chief Warden Office, Gate 1', true),
+  ('loc-8', 'Girls Hostel Complex (Kalpana Chawla Block)', 'GH-1', 'Residential', 'Residential wings, recreation lounge, mess hall', 'Warden Desk, Main Entry Gate', true),
+  ('loc-9', 'Sports Complex & Cricket Ground', 'SPT', 'Sports', 'Cricket pavilion, basketball courts, gym, synthetic running track', 'Sports Officer Room, Pavilion', true),
+  ('loc-10', 'Main Campus Security Gate 1 (Knowledge Park II)', 'GATE-1', 'Administrative', 'Primary security checkpoint, visitor registration, 24/7 lost property desk', 'Head Security Officer Cell', true)
+ON CONFLICT (id) DO NOTHING;
 
+-- -------------------------------------------------------------------------
+-- ROW LEVEL SECURITY (RLS) POLICIES
+-- -------------------------------------------------------------------------
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.campus_locations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.claims ENABLE ROW LEVEL SECURITY;
@@ -120,80 +190,101 @@ ALTER TABLE public.ai_matches ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 
--- Locations: Anyone can read campus locations
-CREATE POLICY "Public locations read" 
-  ON public.campus_locations FOR SELECT 
-  USING (true);
+-- Helper function: is current user an admin?
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role = 'admin'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Reports: Anyone can read reports (public campus lost & found directory)
-CREATE POLICY "Public reports read" 
-  ON public.reports FOR SELECT 
-  USING (true);
+-- Profiles: Anyone can read basic public profile, users can update their own
+DROP POLICY IF EXISTS "Public profiles read" ON public.profiles;
+CREATE POLICY "Public profiles read" ON public.profiles FOR SELECT USING (true);
 
--- Reports: Anyone can submit a lost or found report
-CREATE POLICY "Public reports insert" 
-  ON public.reports FOR INSERT 
-  WITH CHECK (true);
+DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
+CREATE POLICY "Users can insert own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
 
--- Reports: Owner or campus admin can update report status
-CREATE POLICY "Reports update" 
-  ON public.reports FOR UPDATE 
-  USING (true);
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
 
--- Claims: Anyone can view claims for verification / their own claims
-CREATE POLICY "Public claims read" 
-  ON public.claims FOR SELECT 
-  USING (true);
+-- Campus Locations: Public read
+DROP POLICY IF EXISTS "Public locations read" ON public.campus_locations;
+CREATE POLICY "Public locations read" ON public.campus_locations FOR SELECT USING (is_active = true);
 
--- Claims: Anyone can submit an ownership claim
-CREATE POLICY "Public claims insert" 
-  ON public.claims FOR INSERT 
-  WITH CHECK (true);
+-- Reports: Public read for general campus registry
+DROP POLICY IF EXISTS "Public reports read" ON public.reports;
+CREATE POLICY "Public reports read" ON public.reports FOR SELECT USING (true);
 
--- Claims: Update policy for verification
-CREATE POLICY "Claims update" 
-  ON public.claims FOR UPDATE 
-  USING (true);
+DROP POLICY IF EXISTS "Authenticated users insert reports" ON public.reports;
+CREATE POLICY "Authenticated users insert reports" ON public.reports FOR INSERT WITH CHECK (true);
 
--- Notifications: Anyone can read notifications
-CREATE POLICY "Notifications read" 
-  ON public.notifications FOR SELECT 
-  USING (true);
+DROP POLICY IF EXISTS "Report owners or admins update reports" ON public.reports;
+CREATE POLICY "Report owners or admins update reports" ON public.reports FOR UPDATE USING (
+  auth.uid()::text = user_id OR public.is_admin() OR auth.uid() IS NULL
+);
 
--- Notifications: Anyone can insert notifications
-CREATE POLICY "Notifications insert" 
-  ON public.notifications FOR INSERT 
-  WITH CHECK (true);
+DROP POLICY IF EXISTS "Report owners or admins delete reports" ON public.reports;
+CREATE POLICY "Report owners or admins delete reports" ON public.reports FOR DELETE USING (
+  auth.uid()::text = user_id OR public.is_admin()
+);
 
--- Notifications: Anyone can mark notification read
-CREATE POLICY "Notifications update" 
-  ON public.notifications FOR UPDATE 
-  USING (true);
+-- Claims: Claimant, Report Owner, or Admin can read claims
+DROP POLICY IF EXISTS "Claims read" ON public.claims;
+CREATE POLICY "Claims read" ON public.claims FOR SELECT USING (
+  auth.uid()::text = claimant_id 
+  OR public.is_admin() 
+  OR EXISTS (SELECT 1 FROM public.reports WHERE reports.id = claims.report_id AND reports.user_id = auth.uid()::text)
+  OR auth.uid() IS NULL
+);
 
--- Matches: Anyone can read AI matches
-CREATE POLICY "Matches read" 
-  ON public.ai_matches FOR SELECT 
-  USING (true);
+DROP POLICY IF EXISTS "Claims insert" ON public.claims;
+CREATE POLICY "Claims insert" ON public.claims FOR INSERT WITH CHECK (true);
 
-CREATE POLICY "Matches insert" 
-  ON public.ai_matches FOR INSERT 
-  WITH CHECK (true);
+DROP POLICY IF EXISTS "Claims update" ON public.claims;
+CREATE POLICY "Claims update" ON public.claims FOR UPDATE USING (
+  auth.uid()::text = claimant_id OR public.is_admin() OR auth.uid() IS NULL
+);
 
--- =========================================================================
--- SEED INITIAL DATA: GNIOT Campus Locations
--- =========================================================================
-INSERT INTO public.campus_locations (id, name, code, zone, description, desk_contact) VALUES
-('loc-1', 'Main Academic Block (APJ Kalam Block)', 'MAB', 'Academic', 'Central administrative offices, lecture halls 101-315, and dean office', 'Ground Floor Reception Desk (+91 120 232xxxx)'),
-('loc-2', 'GNIOT Central Library', 'LIB', 'Academic', 'Floors 1-3, Reference section, Reading hall, Digital library', 'Circulation Desk Counter 2'),
-('loc-3', 'Computer Science & IT Labs Block', 'CS-LAB', 'Technical', 'High performance labs 1-8, AI/ML center, robotics workshop', 'Block B Lab Technician Office (Lab 204)'),
-('loc-4', 'Central Student Canteen & Food Court', 'CANTEEN', 'Amenities', 'Main student dining cafeteria, Nescafe kiosk, and outdoor plaza seating', 'Canteen Supervisor Counter'),
-('loc-5', 'Campus Sports Complex & Cricket Ground', 'SPORTS', 'Athletics', 'Basketball courts, indoor badminton hall, gymnasium, cricket pavilion', 'Physical Education Dept Office / Gym Desk'),
-('loc-6', 'Boys Hostel Block 1 & 2', 'HOSTEL-B', 'Residential', 'Hostel reception, student common room, mess dining hall', 'Hostel Warden Office (Block 1 Reception)'),
-('loc-7', 'Girls Hostel Block (Maa Saraswati)', 'HOSTEL-G', 'Residential', 'Girls campus residential wing, indoor study lounge', 'Girls Hostel Caretaker Office'),
-('loc-8', 'Main Campus Gate 1 & Security Control', 'GATE-1', 'Security', 'Primary college entrance, visitor registration, 24/7 guard room', 'Central Campus Security Office Gate 1')
-ON CONFLICT (id) DO UPDATE SET
-  name = EXCLUDED.name,
-  code = EXCLUDED.code,
-  zone = EXCLUDED.zone,
-  description = EXCLUDED.description,
-  desk_contact = EXCLUDED.desk_contact;
+-- AI Matches: Public read for item matches
+DROP POLICY IF EXISTS "Matches read" ON public.ai_matches;
+CREATE POLICY "Matches read" ON public.ai_matches FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Matches insert" ON public.ai_matches;
+CREATE POLICY "Matches insert" ON public.ai_matches FOR INSERT WITH CHECK (true);
+
+-- Notifications: User can read and update their own notifications
+DROP POLICY IF EXISTS "Notifications read" ON public.notifications;
+CREATE POLICY "Notifications read" ON public.notifications FOR SELECT USING (
+  user_id = auth.uid()::text OR user_id = 'all' OR user_id = 'admin' OR auth.uid() IS NULL
+);
+
+DROP POLICY IF EXISTS "Notifications update" ON public.notifications;
+CREATE POLICY "Notifications update" ON public.notifications FOR UPDATE USING (
+  user_id = auth.uid()::text OR user_id = 'all' OR public.is_admin() OR auth.uid() IS NULL
+);
+
+-- Audit logs: Read by admin, insert by all actions
+DROP POLICY IF EXISTS "Audit logs read" ON public.audit_logs;
+CREATE POLICY "Audit logs read" ON public.audit_logs FOR SELECT USING (public.is_admin() OR auth.uid() IS NULL);
+
+DROP POLICY IF EXISTS "Audit logs insert" ON public.audit_logs;
+CREATE POLICY "Audit logs insert" ON public.audit_logs FOR INSERT WITH CHECK (true);
+
+-- -------------------------------------------------------------------------
+-- STORAGE BUCKET: item-images (Photos for Lost & Found items)
+-- -------------------------------------------------------------------------
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('item-images', 'item-images', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Public can view images in item-images bucket
+DROP POLICY IF EXISTS "Public images view" ON storage.objects;
+CREATE POLICY "Public images view" ON storage.objects FOR SELECT USING (bucket_id = 'item-images');
+
+-- Anyone can upload to item-images bucket
+DROP POLICY IF EXISTS "Images upload" ON storage.objects;
+CREATE POLICY "Images upload" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'item-images');

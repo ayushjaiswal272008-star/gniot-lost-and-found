@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { ItemCategory, CampusLocation, ReportItem, AIMatchResult } from '../types';
 import { DataService } from '../services/dataService';
+import { uploadItemImage } from '../lib/supabase';
 
 interface ReportLostModalProps {
   isOpen: boolean;
@@ -74,23 +75,20 @@ export const ReportLostModal: React.FC<ReportLostModalProps> = ({
     'other'
   ];
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
 
-    Array.from(files).forEach(file => {
+    for (const file of Array.from(files)) {
       if (file.size > 5 * 1024 * 1024) {
         alert('Image must be under 5MB');
-        return;
+        continue;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (typeof reader.result === 'string') {
-          setImages(prev => [...prev, reader.result as string]);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+      const res = await uploadItemImage(file, currentUser.name);
+      if (res.url) {
+        setImages(prev => [...prev, res.url]);
+      }
+    }
   };
 
   const removeImage = (index: number) => {

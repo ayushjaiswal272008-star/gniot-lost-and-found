@@ -1,18 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
   <defs>
-    <linearGradient id="grad" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#4F46E5" />
-      <stop offset="50%" stop-color="#06B6D4" />
-      <stop offset="100%" stop-color="#F97316" />
+    <linearGradient id="gniot-gold" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F3C363" />
+      <stop offset="60%" stop-color="#D9A441" />
+      <stop offset="100%" stop-color="#BE8B2C" />
     </linearGradient>
-    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="2" result="blur" />
+    <linearGradient id="bg-grad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3D1B3C" />
+      <stop offset="100%" stop-color="#240E23" />
+    </linearGradient>
+    <filter id="gold-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="1.5" result="blur" />
       <feComposite in="SourceGraphic" in2="blur" operator="over" />
     </filter>
   </defs>
-  <rect width="64" height="64" rx="16" fill="#0F172A" />
-  <circle cx="32" cy="32" r="22" stroke="url(#grad)" stroke-width="2.5" stroke-dasharray="4 3" opacity="0.6" />
-  <circle cx="32" cy="32" r="14" stroke="url(#grad)" stroke-width="2.5" opacity="0.8" />
-  <circle cx="32" cy="32" r="5" fill="url(#grad)" filter="url(#glow)" />
-  <path d="M42 18L44 23L49 25L44 27L42 32L40 27L35 25L40 23Z" fill="#38BDF8" />
+  <rect width="64" height="64" rx="16" fill="url(#bg-grad)" stroke="#D9A441" stroke-width="1.5" stroke-opacity="0.4" />
+  <circle cx="32" cy="32" r="23" stroke="url(#gniot-gold)" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.4" />
+  <circle cx="32" cy="32" r="16" stroke="url(#gniot-gold)" stroke-width="1.5" opacity="0.6" />
+  <!-- G emblem -->
+  <path d="M41 24.5C38.8 21.5 34.5 20 31 20C24 20 18.5 25.5 18.5 32.5C18.5 39.5 24 45 31 45C37.5 45 42 41 42.8 35H30.5V30.5H47C47.3 32 47.5 33.5 47.5 35C47.5 43.5 41 49.5 31 49.5C21 49.5 13.5 42 13.5 32.5C13.5 23 21 15.5 31 15.5C36 15.5 41.5 17.5 45 21.5L41 24.5Z" fill="url(#gniot-gold)" filter="url(#gold-glow)" />
+  <!-- Sparkle star -->
+  <path d="M47 13L48.2 16.5L52 17.5L48.2 18.5L47 22L45.8 18.5L42 17.5L45.8 16.5Z" fill="#F3C363" />
 </svg>

@@ -30,6 +30,9 @@ interface StudentDashboardProps {
   onSelectItem: (report: ReportItem) => void;
   onMarkNotificationRead: (id: string) => void;
   onOpenReport: (type: 'lost' | 'found') => void;
+  onDeleteReport?: (id: string) => Promise<void> | void;
+  isAuthenticated?: boolean;
+  onOpenAuth?: () => void;
 }
 
 export const StudentDashboard: React.FC<StudentDashboardProps> = ({
@@ -41,8 +44,25 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   onSelectItem,
   onMarkNotificationRead,
   onOpenReport,
+  onDeleteReport,
+  isAuthenticated = true,
+  onOpenAuth,
 }) => {
   const [activeTab, setActiveTab] = useState<'reports' | 'matches' | 'claims' | 'notifications'>('reports');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (!window.confirm('Are you sure you want to delete this report? This cannot be undone.')) return;
+    if (onDeleteReport) {
+      setDeletingId(id);
+      try {
+        await onDeleteReport(id);
+      } finally {
+        setDeletingId(null);
+      }
+    }
+  };
 
   const myLostReports = reports.filter(r => r.type === 'lost' && (r.userId === currentUser.id || r.userEmail === currentUser.email || r.userName.includes(currentUser.name)));
   const myFoundReports = reports.filter(r => r.type === 'found' && (r.userId === currentUser.id || r.userEmail === currentUser.email || r.userName.includes(currentUser.name)));
@@ -93,6 +113,31 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Unauthenticated Alert */}
+      {!isAuthenticated && (
+        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-[#D9A441] shrink-0" />
+            <div>
+              <p className="text-xs font-bold text-[#30152F] dark:text-[#E8EDF2]">
+                You are currently browsing as a Guest
+              </p>
+              <p className="text-[11px] text-slate-600 dark:text-[#E8EDF2]/70">
+                Sign in or create an account with your GNIOT college email to track your reported items and claims permanently in Supabase.
+              </p>
+            </div>
+          </div>
+          {onOpenAuth && (
+            <button
+              onClick={onOpenAuth}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#D9A441] to-[#C59132] text-[#190918] font-bold text-xs shadow-md shrink-0 hover:brightness-105 transition-all"
+            >
+              Sign In / Sign Up
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Navigation Tabs */}
       <div className="flex items-center gap-2 border-b border-slate-300 dark:border-[#D9A441]/25 pb-2 overflow-x-auto no-scrollbar">
@@ -149,7 +194,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
       {activeTab === 'reports' && (
         <div className="space-y-6">
           <div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-white mb-3">
+            <h3 className="text-base font-bold text-[#30152F] dark:text-[#E8EDF2] mb-3">
               Items I Reported Lost ({myLostReports.length})
             </h3>
             {myLostReports.length > 0 ? (
@@ -158,38 +203,50 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                   <div
                     key={item.id}
                     onClick={() => onSelectItem(item)}
-                    className="p-4 rounded-2xl glass-card border border-slate-200 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-500 cursor-pointer shadow-sm hover:shadow-md transition-all flex items-center gap-4 group"
+                    className="p-4 rounded-2xl glass-card border border-slate-300 dark:border-[#D9A441]/20 hover:border-[#D9A441] cursor-pointer shadow-sm hover:shadow-md transition-all flex items-center gap-4 group relative"
                   >
                     <img
                       src={item.images[0]}
                       alt={item.title}
-                      className="w-16 h-16 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
+                      className="w-16 h-16 rounded-xl object-cover border border-slate-300 dark:border-slate-700 shrink-0"
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <span className="font-mono text-[10px] text-slate-400 font-semibold">{item.id}</span>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                        <span className="font-mono text-[10px] text-slate-500 font-semibold">{item.id}</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#D9A441]/20 text-[#BE8B2C] dark:text-[#D9A441]">
                           {item.status}
                         </span>
                       </div>
-                      <h4 className="font-bold text-sm text-slate-900 dark:text-white truncate group-hover:text-indigo-600 transition-colors">
+                      <h4 className="font-bold text-sm text-[#30152F] dark:text-[#E8EDF2] truncate group-hover:text-[#D9A441] transition-colors">
                         {item.title}
                       </h4>
-                      <p className="text-xs text-slate-500 truncate mt-0.5">{item.locationName} • {item.date}</p>
+                      <p className="text-xs text-slate-600 dark:text-[#E8EDF2]/70 truncate mt-0.5">{item.locationName} • {item.date}</p>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-indigo-600 transition-transform" />
+                    <div className="flex items-center gap-2">
+                      {onDeleteReport && (
+                        <button
+                          title="Delete report"
+                          disabled={deletingId === item.id}
+                          onClick={(e) => handleDelete(e, item.id)}
+                          className="p-2 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                      <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-[#D9A441] transition-transform" />
+                    </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-slate-500 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50">
+              <p className="text-xs text-slate-500 p-4 rounded-2xl bg-slate-100 dark:bg-[#30152F]/40 border border-slate-200 dark:border-[#D9A441]/20">
                 You have not reported any lost items.
               </p>
             )}
           </div>
 
           <div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-white mb-3">
+            <h3 className="text-base font-bold text-[#30152F] dark:text-[#E8EDF2] mb-3">
               Items I Found &amp; Turned In ({myFoundReports.length})
             </h3>
             {myFoundReports.length > 0 ? (
@@ -198,31 +255,43 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                   <div
                     key={item.id}
                     onClick={() => onSelectItem(item)}
-                    className="p-4 rounded-2xl glass-card border border-slate-200 dark:border-slate-800 hover:border-emerald-400 dark:hover:border-emerald-500 cursor-pointer shadow-sm hover:shadow-md transition-all flex items-center gap-4 group"
+                    className="p-4 rounded-2xl glass-card border border-slate-300 dark:border-[#D9A441]/20 hover:border-emerald-500 cursor-pointer shadow-sm hover:shadow-md transition-all flex items-center gap-4 group relative"
                   >
                     <img
                       src={item.images[0]}
                       alt={item.title}
-                      className="w-16 h-16 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0"
+                      className="w-16 h-16 rounded-xl object-cover border border-slate-300 dark:border-slate-700 shrink-0"
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <span className="font-mono text-[10px] text-slate-400 font-semibold">{item.id}</span>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                        <span className="font-mono text-[10px] text-slate-500 font-semibold">{item.id}</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">
                           {item.status}
                         </span>
                       </div>
-                      <h4 className="font-bold text-sm text-slate-900 dark:text-white truncate group-hover:text-emerald-600 transition-colors">
+                      <h4 className="font-bold text-sm text-[#30152F] dark:text-[#E8EDF2] truncate group-hover:text-emerald-500 transition-colors">
                         {item.title}
                       </h4>
-                      <p className="text-xs text-slate-500 truncate mt-0.5">Custody: {item.storageDesk || 'Campus Desk'}</p>
+                      <p className="text-xs text-slate-600 dark:text-[#E8EDF2]/70 truncate mt-0.5">Custody: {item.storageDesk || 'Campus Desk'}</p>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-emerald-600 transition-transform" />
+                    <div className="flex items-center gap-2">
+                      {onDeleteReport && (
+                        <button
+                          title="Delete report"
+                          disabled={deletingId === item.id}
+                          onClick={(e) => handleDelete(e, item.id)}
+                          className="p-2 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                      <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-emerald-500 transition-transform" />
+                    </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-slate-500 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50">
+              <p className="text-xs text-slate-500 p-4 rounded-2xl bg-slate-100 dark:bg-[#30152F]/40 border border-slate-200 dark:border-[#D9A441]/20">
                 You have not reported any found items.
               </p>
             )}

@@ -681,5 +681,23 @@ export const DataService = {
       item.isRead = true;
       setLocal(STORAGE_KEYS.NOTIFICATIONS, notifs);
     }
+  },
+
+  // 11. Delete Report (Owner or Admin)
+  async deleteReport(reportId: string): Promise<boolean> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { error } = await supabase.from('reports').delete().eq('id', reportId);
+        if (!error) return true;
+        console.warn('Supabase delete error:', error.message);
+      } catch (err) {
+        console.warn('Supabase deleteReport failed:', err);
+      }
+    }
+
+    const reports = getLocal<ReportItem[]>(STORAGE_KEYS.REPORTS, []);
+    const filtered = reports.filter(r => r.id !== reportId);
+    setLocal(STORAGE_KEYS.REPORTS, filtered);
+    return true;
   }
 };

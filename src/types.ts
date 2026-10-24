@@ -111,6 +111,7 @@ export interface Claim {
 export interface UserProfile {
   id: string;
   name: string;
+  fullName?: string;
   email: string;
   rollNo: string;
   role: 'student' | 'admin';
