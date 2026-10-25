@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,8 +8,23 @@
     <meta property="og:title" content="GNIOT Lost &amp; Found AI" />
     <meta property="og:description" content="Futuristic 3D campus lost &amp; found platform with AI smart matching, visual search, and secure claim recovery for GNIOT College, Greater Noida." />
     <meta property="og:type" content="website" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#190918" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="GNIOT Lost &amp; Found" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="alternate icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <script>
+      // Enforce golden & dark aubergine theme immediately before first render
+      try {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('gniot_theme', 'dark');
+        localStorage.setItem('gniot_theme_v2', 'dark');
+      } catch (e) {}
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">

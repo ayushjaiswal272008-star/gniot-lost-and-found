@@ -55,12 +55,13 @@ import { INITIAL_CAMPUS_LOCATIONS } from './data/campusData';
 import { DataService } from './services/dataService';
 import { isSupabaseConfigured } from './services/supabaseClient';
 import { isBackendConfigured } from './services/apiConfig';
+import { OfflineIndicator } from './components/OfflineIndicator';
 
 function MainApp() {
-  // Theme state
+  // Theme state: Defaults to true (Aubergine & Gold Signature Theme)
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    return localStorage.getItem('gniot_theme') === 'dark' || 
-      window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('gniot_theme_v2') : null;
+    return saved !== 'light';
   });
 
   // Navigation tab
@@ -121,14 +122,16 @@ function MainApp() {
   // Home search query
   const [quickSearchInput, setQuickSearchInput] = useState('');
 
-  // Toggle Theme
+  // Toggle Theme: Always enforce dark class
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
       localStorage.setItem('gniot_theme', 'dark');
+      localStorage.setItem('gniot_theme_v2', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('gniot_theme', 'light');
+      localStorage.setItem('gniot_theme_v2', 'light');
     }
   }, [isDarkMode]);
 
@@ -221,9 +224,9 @@ function MainApp() {
   const recentlyReunited = reports.filter(r => r.status === 'Resolved').slice(0, 3);
 
   return (
-    <div className="min-h-screen bg-[#E8EDF2] dark:bg-[#190918] text-[#30152F] dark:text-[#E8EDF2] transition-colors duration-300 font-sans selection:bg-[#D9A441] selection:text-[#30152F]">
+    <div className="min-h-screen bg-[#190918] text-[#E8EDF2] transition-colors duration-300 font-sans selection:bg-[#D9A441] selection:text-[#30152F]">
       {/* Top Futuristic Header Navigation */}
-      <header className="sticky top-0 z-40 w-full glass-panel border-b border-[#30152F]/10 dark:border-[#D9A441]/20 bg-[#E8EDF2]/90 dark:bg-[#30152F]/95 backdrop-blur-md transition-all">
+      <header className="sticky top-0 z-40 w-full glass-panel border-b border-[#D9A441]/20 bg-[#30152F]/95 backdrop-blur-md transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between gap-4">
           {/* Logo & College Brand */}
           <div 
@@ -237,48 +240,48 @@ function MainApp() {
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-base sm:text-lg tracking-tight font-display text-[#30152F] dark:text-white">
+                <span className="font-extrabold text-base sm:text-lg tracking-tight font-display text-white">
                   GNIOT <span className="text-[#D9A441]">AI Lost &amp; Found</span>
                 </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#D9A441]/15 text-[#30152F] dark:text-[#D9A441] border border-[#D9A441]/30 hidden sm:inline">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#D9A441]/15 text-[#D9A441] border border-[#D9A441]/30 hidden sm:inline">
                   Greater Noida
                 </span>
                 {dbStatus?.connected ? (
-                  <span title={`Connected to Supabase PostgreSQL Database (${dbStatus.message})`} className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                  <span title={`Connected to Supabase PostgreSQL Database (${dbStatus.message})`} className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                     <span className="hidden lg:inline">Supabase Live</span>
                   </span>
                 ) : isSupabaseConfigured ? (
-                  <span title={dbStatus?.message || "Supabase configuration active"} className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                  <span title={dbStatus?.message || "Supabase configuration active"} className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                     <span className="hidden lg:inline">Supabase Connecting</span>
                   </span>
                 ) : isBackendConfigured() ? (
-                  <span title="Connected to Express API Server" className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#D9A441]/15 text-[#30152F] dark:text-[#D9A441] border border-[#D9A441]/30 flex items-center gap-1">
+                  <span title="Connected to Express API Server" className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#D9A441]/15 text-[#D9A441] border border-[#D9A441]/30 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#D9A441]"></span>
                     <span className="hidden lg:inline">API Sync</span>
                   </span>
                 ) : (
-                  <span title="Running in static mode on GitHub Pages. Connect Supabase for cloud database." className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#30152F]/10 dark:bg-white/10 text-[#30152F]/70 dark:text-[#E8EDF2]/70 border border-[#30152F]/20 dark:border-white/20 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                    <span className="hidden lg:inline">Static Mode</span>
+                  <span title="Connected with local caching & instant Supabase sync." className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#30152F] text-[#D9A441] border border-[#D9A441]/30 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#D9A441]"></span>
+                    <span className="hidden lg:inline">GNIOT Campus Mode</span>
                   </span>
                 )}
               </div>
-              <p className="text-[10px] text-[#30152F]/70 dark:text-[#E8EDF2]/70 font-medium">
+              <p className="text-[10px] text-[#E8EDF2]/70 font-medium">
                 Knowledge Park II • Campus Recovery Network
               </p>
             </div>
           </div>
 
           {/* Navigation Links */}
-          <nav className="hidden md:flex items-center gap-1 p-1 rounded-2xl bg-[#E8EDF2] dark:bg-[#240E23] border border-[#30152F]/15 dark:border-[#D9A441]/20 text-xs font-semibold">
+          <nav className="hidden md:flex items-center gap-1 p-1 rounded-2xl bg-[#240E23] border border-[#D9A441]/20 text-xs font-semibold">
             <button
               onClick={() => setCurrentNav('home')}
               className={`px-3.5 py-2 rounded-xl transition-all ${
                 currentNav === 'home'
-                  ? 'bg-[#30152F] text-[#D9A441] shadow-sm font-bold'
-                  : 'text-[#30152F]/80 dark:text-[#E8EDF2]/80 hover:text-[#30152F] dark:hover:text-white'
+                  ? 'bg-[#30152F] text-[#D9A441] shadow-sm font-bold border border-[#D9A441]/30'
+                  : 'text-[#E8EDF2]/80 hover:text-white'
               }`}
             >
               Home
@@ -287,8 +290,8 @@ function MainApp() {
               onClick={() => setCurrentNav('search')}
               className={`px-3.5 py-2 rounded-xl transition-all ${
                 currentNav === 'search'
-                  ? 'bg-[#30152F] text-[#D9A441] shadow-sm font-bold'
-                  : 'text-[#30152F]/80 dark:text-[#E8EDF2]/80 hover:text-[#30152F] dark:hover:text-white'
+                  ? 'bg-[#30152F] text-[#D9A441] shadow-sm font-bold border border-[#D9A441]/30'
+                  : 'text-[#E8EDF2]/80 hover:text-white'
               }`}
             >
               Campus Registry
@@ -297,8 +300,8 @@ function MainApp() {
               onClick={() => setCurrentNav('dashboard')}
               className={`px-3.5 py-2 rounded-xl transition-all ${
                 currentNav === 'dashboard'
-                  ? 'bg-[#30152F] text-[#D9A441] shadow-sm font-bold'
-                  : 'text-[#30152F]/80 dark:text-[#E8EDF2]/80 hover:text-[#30152F] dark:hover:text-white'
+                  ? 'bg-[#30152F] text-[#D9A441] shadow-sm font-bold border border-[#D9A441]/30'
+                  : 'text-[#E8EDF2]/80 hover:text-white'
               }`}
             >
               Student Dashboard
@@ -307,8 +310,8 @@ function MainApp() {
               onClick={() => setCurrentNav('admin')}
               className={`px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 ${
                 currentNav === 'admin'
-                  ? 'bg-[#30152F] text-[#D9A441] shadow-sm font-bold'
-                  : 'text-[#30152F]/80 dark:text-[#E8EDF2]/80 hover:text-[#30152F] dark:hover:text-white'
+                  ? 'bg-[#30152F] text-[#D9A441] shadow-sm font-bold border border-[#D9A441]/30'
+                  : 'text-[#E8EDF2]/80 hover:text-white'
               }`}
             >
               <Lock className="w-3.5 h-3.5 text-[#D9A441]" />
@@ -321,7 +324,7 @@ function MainApp() {
             <button
               onClick={() => setIsVisualSearchOpen(true)}
               title="AI Visual Photo Search"
-              className="p-2 sm:px-3 sm:py-2 rounded-xl bg-[#D9A441]/15 hover:bg-[#D9A441]/25 text-[#30152F] dark:text-[#D9A441] border border-[#D9A441]/30 text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs"
+              className="p-2 sm:px-3 sm:py-2 rounded-xl bg-[#D9A441]/15 hover:bg-[#D9A441]/25 text-[#D9A441] border border-[#D9A441]/30 text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs"
             >
               <Camera className="w-4 h-4 text-[#D9A441]" />
               <span className="hidden sm:inline">Vision Search</span>
@@ -332,22 +335,22 @@ function MainApp() {
               <div className="relative">
                 <button
                   onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                  className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-white/70 dark:bg-[#2B112A] hover:bg-white dark:hover:bg-[#391738] border border-slate-300 dark:border-[#D9A441]/30 transition-all text-xs font-semibold shadow-xs"
+                  className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-[#2B112A] hover:bg-[#391738] border border-[#D9A441]/30 transition-all text-xs font-semibold shadow-xs"
                 >
                   <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-[#30152F] to-[#D9A441] text-[#E8EDF2] font-bold flex items-center justify-center text-[11px] shadow-xs">
                     {currentUser.name.charAt(0)}
                   </div>
-                  <span className="hidden md:inline text-xs font-semibold max-w-[100px] truncate text-[#30152F] dark:text-[#E8EDF2]">
+                  <span className="hidden md:inline text-xs font-semibold max-w-[100px] truncate text-[#E8EDF2]">
                     {currentUser.name.split(' ')[0]}
                   </span>
                 </button>
 
                 {userDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-56 p-2 rounded-2xl glass-panel shadow-2xl border border-slate-300 dark:border-[#D9A441]/30 bg-white dark:bg-[#30152F] z-50 animate-in fade-in zoom-in-95">
-                    <div className="px-3 py-2 border-b border-slate-200 dark:border-white/10 mb-1">
-                      <p className="text-xs font-bold text-[#30152F] dark:text-[#E8EDF2] truncate">{currentUser.name}</p>
-                      <p className="text-[11px] text-slate-500 dark:text-[#E8EDF2]/70 truncate">{currentUser.email}</p>
-                      <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full bg-[#D9A441]/20 text-[#BE8B2C] dark:text-[#D9A441] font-semibold">
+                  <div className="absolute right-0 mt-2 w-56 p-2 rounded-2xl glass-panel shadow-2xl border border-[#D9A441]/30 bg-[#30152F] z-50 animate-in fade-in zoom-in-95">
+                    <div className="px-3 py-2 border-b border-white/10 mb-1">
+                      <p className="text-xs font-bold text-[#E8EDF2] truncate">{currentUser.name}</p>
+                      <p className="text-[11px] text-[#E8EDF2]/70 truncate">{currentUser.email}</p>
+                      <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full bg-[#D9A441]/20 text-[#D9A441] font-semibold">
                         {isUserAdmin ? 'Campus Admin' : 'Student'}
                       </span>
                     </div>
@@ -357,7 +360,7 @@ function MainApp() {
                         setCurrentNav('dashboard');
                         setUserDropdownOpen(false);
                       }}
-                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold hover:bg-slate-100 dark:hover:bg-[#240E23] text-[#30152F] dark:text-[#E8EDF2] flex items-center gap-2"
+                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold hover:bg-[#240E23] text-[#E8EDF2] flex items-center gap-2"
                     >
                       <User className="w-4 h-4 text-[#D9A441]" />
                       My Dashboard
@@ -368,7 +371,7 @@ function MainApp() {
                         await signOut();
                         setUserDropdownOpen(false);
                       }}
-                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-500/10 flex items-center gap-2 transition-colors"
+                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-red-400 hover:bg-red-500/10 flex items-center gap-2 transition-colors"
                     >
                       <LogOut className="w-4 h-4" />
                       Sign Out
@@ -383,7 +386,7 @@ function MainApp() {
                     setAuthModalMode('signin');
                     setIsAuthModalOpen(true);
                   }}
-                  className="px-3 py-2 rounded-xl text-xs font-bold text-[#30152F] dark:text-[#E8EDF2] hover:text-[#D9A441] transition-colors"
+                  className="px-3 py-2 rounded-xl text-xs font-bold text-[#E8EDF2] hover:text-[#D9A441] transition-colors"
                 >
                   Sign In
                 </button>
@@ -401,14 +404,18 @@ function MainApp() {
 
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
-              aria-label="Toggle Theme"
-              className="p-2.5 rounded-xl border border-[#30152F]/15 dark:border-[#D9A441]/25 bg-white dark:bg-[#30152F] text-[#30152F] dark:text-[#E8EDF2] hover:text-[#D9A441] transition-colors shadow-xs"
+              aria-label="Toggle Theme Mode"
+              title="Signature Gold & Deep Aubergine Theme"
+              className="p-2.5 rounded-xl border border-[#D9A441]/25 bg-[#30152F] text-[#D9A441] hover:bg-[#3D1A3C] transition-colors shadow-xs"
             >
-              {isDarkMode ? <Sun className="w-4 h-4 text-[#D9A441]" /> : <Moon className="w-4 h-4 text-[#30152F]" />}
+              <Sun className="w-4 h-4 text-[#D9A441]" />
             </button>
           </div>
         </div>
       </header>
+
+      {/* Offline Mode Indicator */}
+      <OfflineIndicator />
 
       {/* Main Content Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-12">
@@ -429,7 +436,7 @@ function MainApp() {
             <div className="max-w-3xl mx-auto -mt-6 sm:-mt-8 relative z-20">
               <form 
                 onSubmit={handleQuickSearchSubmit}
-                className="p-2 sm:p-3 rounded-3xl glass-panel shadow-2xl border border-[#30152F]/15 dark:border-[#D9A441]/30 bg-white/95 dark:bg-[#30152F]/95 flex items-center gap-2"
+                className="p-2 sm:p-3 rounded-3xl glass-panel shadow-2xl border border-[#D9A441]/30 bg-[#30152F]/95 flex items-center gap-2"
               >
                 <div className="relative flex-1 flex items-center">
                   <Search className="w-5 h-5 text-[#D9A441] ml-3 shrink-0" />
@@ -438,14 +445,14 @@ function MainApp() {
                     value={quickSearchInput}
                     onChange={e => setQuickSearchInput(e.target.value)}
                     placeholder="Search by keywords, campus location, color, brand (e.g. Boat earbuds in CS Lab)..."
-                    className="w-full pl-3 pr-4 py-3 bg-transparent text-sm sm:text-base text-[#30152F] dark:text-[#E8EDF2] placeholder:text-[#30152F]/40 dark:placeholder:text-[#E8EDF2]/40 focus:outline-none font-medium"
+                    className="w-full pl-3 pr-4 py-3 bg-transparent text-sm sm:text-base text-[#E8EDF2] placeholder:text-[#E8EDF2]/40 focus:outline-none font-medium"
                   />
                 </div>
                 <button
                   type="submit"
-                  className="px-6 py-3 rounded-2xl bg-[#D9A441] hover:bg-[#c49233] text-[#30152F] font-bold text-xs sm:text-sm shadow-md transition-all flex items-center gap-1.5 shrink-0"
+                  className="px-6 py-3 rounded-2xl bg-[#D9A441] hover:bg-[#c49233] text-[#190918] font-bold text-xs sm:text-sm shadow-md transition-all flex items-center gap-1.5 shrink-0"
                 >
-                  <Sparkles className="w-4 h-4 text-[#30152F]" />
+                  <Sparkles className="w-4 h-4 text-[#190918]" />
                   <span>Search AI</span>
                 </button>
               </form>
@@ -453,62 +460,62 @@ function MainApp() {
 
             {/* Real Database Live Stats Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-              <div className="p-5 rounded-3xl glass-card border border-[#30152F]/10 dark:border-[#D9A441]/20 bg-white/80 dark:bg-[#30152F]/70 shadow-sm relative overflow-hidden group">
+              <div className="p-5 rounded-3xl glass-card border border-[#D9A441]/20 bg-[#30152F]/80 shadow-sm relative overflow-hidden group">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#30152F]/70 dark:text-[#E8EDF2]/70">Total Lost Items</span>
-                  <div className="p-2 rounded-xl bg-red-500/15 text-red-700 dark:text-red-400">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#E8EDF2]/70">Total Lost Items</span>
+                  <div className="p-2 rounded-xl bg-red-500/15 text-red-400">
                     <AlertCircle className="w-5 h-5" />
                   </div>
                 </div>
-                <div className="mt-3 text-2xl sm:text-4xl font-extrabold text-[#30152F] dark:text-white font-display">
+                <div className="mt-3 text-2xl sm:text-4xl font-extrabold text-white font-display">
                   {stats.totalLost}
                 </div>
-                <div className="mt-1 text-[11px] text-[#30152F]/70 dark:text-[#E8EDF2]/70 font-medium">
+                <div className="mt-1 text-[11px] text-[#E8EDF2]/70 font-medium">
                   Real campus logs from Greater Noida
                 </div>
               </div>
 
-              <div className="p-5 rounded-3xl glass-card border border-[#30152F]/10 dark:border-[#D9A441]/20 bg-white/80 dark:bg-[#30152F]/70 shadow-sm relative overflow-hidden group">
+              <div className="p-5 rounded-3xl glass-card border border-[#D9A441]/20 bg-[#30152F]/80 shadow-sm relative overflow-hidden group">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#30152F]/70 dark:text-[#E8EDF2]/70">Found &amp; Turned In</span>
-                  <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#E8EDF2]/70">Found &amp; Turned In</span>
+                  <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-400">
                     <CheckCircle2 className="w-5 h-5" />
                   </div>
                 </div>
-                <div className="mt-3 text-2xl sm:text-4xl font-extrabold text-[#30152F] dark:text-white font-display">
+                <div className="mt-3 text-2xl sm:text-4xl font-extrabold text-white font-display">
                   {stats.totalFound}
                 </div>
-                <div className="mt-1 text-[11px] text-[#30152F]/70 dark:text-[#E8EDF2]/70 font-medium">
+                <div className="mt-1 text-[11px] text-[#E8EDF2]/70 font-medium">
                   Custody at Library Counter &amp; Gate 1
                 </div>
               </div>
 
-              <div className="p-5 rounded-3xl glass-card border border-[#30152F]/10 dark:border-[#D9A441]/20 bg-white/80 dark:bg-[#30152F]/70 shadow-sm relative overflow-hidden group">
+              <div className="p-5 rounded-3xl glass-card border border-[#D9A441]/20 bg-[#30152F]/80 shadow-sm relative overflow-hidden group">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#30152F]/70 dark:text-[#E8EDF2]/70">Reunited Items</span>
-                  <div className="p-2 rounded-xl bg-[#D9A441]/20 text-[#30152F] dark:text-[#D9A441]">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#E8EDF2]/70">Reunited Items</span>
+                  <div className="p-2 rounded-xl bg-[#D9A441]/20 text-[#D9A441]">
                     <HeartHandshake className="w-5 h-5" />
                   </div>
                 </div>
-                <div className="mt-3 text-2xl sm:text-4xl font-extrabold text-[#30152F] dark:text-white font-display">
+                <div className="mt-3 text-2xl sm:text-4xl font-extrabold text-white font-display">
                   {stats.totalReunited}
                 </div>
-                <div className="mt-1 text-[11px] text-[#30152F]/70 dark:text-[#E8EDF2]/70 font-medium">
+                <div className="mt-1 text-[11px] text-[#E8EDF2]/70 font-medium">
                   <span className="text-[#D9A441] font-bold">{stats.recoveryRatePercent}%</span> Campus Recovery Rate
                 </div>
               </div>
 
-              <div className="p-5 rounded-3xl glass-card border border-[#30152F]/10 dark:border-[#D9A441]/20 bg-white/80 dark:bg-[#30152F]/70 shadow-sm relative overflow-hidden group">
+              <div className="p-5 rounded-3xl glass-card border border-[#D9A441]/20 bg-[#30152F]/80 shadow-sm relative overflow-hidden group">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#30152F]/70 dark:text-[#E8EDF2]/70">Pending Claims</span>
-                  <div className="p-2 rounded-xl bg-[#D9A441]/20 text-[#30152F] dark:text-[#D9A441]">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#E8EDF2]/70">Pending Claims</span>
+                  <div className="p-2 rounded-xl bg-[#D9A441]/20 text-[#D9A441]">
                     <Clock className="w-5 h-5" />
                   </div>
                 </div>
-                <div className="mt-3 text-2xl sm:text-4xl font-extrabold text-[#30152F] dark:text-white font-display">
+                <div className="mt-3 text-2xl sm:text-4xl font-extrabold text-white font-display">
                   {stats.pendingClaims}
                 </div>
-                <div className="mt-1 text-[11px] text-[#30152F]/70 dark:text-[#E8EDF2]/70 font-medium">
+                <div className="mt-1 text-[11px] text-[#E8EDF2]/70 font-medium">
                   Verification in progress
                 </div>
               </div>
@@ -518,10 +525,10 @@ function MainApp() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-bold font-display text-[#30152F] dark:text-white">
+                  <h2 className="text-xl sm:text-2xl font-bold font-display text-white">
                     Recently Reported Lost
                   </h2>
-                  <p className="text-xs text-[#30152F]/70 dark:text-[#E8EDF2]/70">
+                  <p className="text-xs text-[#E8EDF2]/70">
                     Keep an eye out across classrooms and cafeteria
                   </p>
                 </div>
@@ -540,33 +547,33 @@ function MainApp() {
                     <Card3D
                       key={item.id}
                       onClick={() => setSelectedReport(item)}
-                      className="p-4 rounded-3xl glass-card border border-[#30152F]/10 dark:border-[#D9A441]/20 bg-white/85 dark:bg-[#30152F]/80 hover:border-red-400 dark:hover:border-red-500/50 shadow-sm hover:shadow-lg cursor-pointer transition-all group"
+                      className="p-4 rounded-3xl glass-card border border-[#D9A441]/20 bg-[#30152F]/85 hover:border-red-500/50 shadow-sm hover:shadow-lg cursor-pointer transition-all group"
                     >
-                      <div className="relative aspect-4/3 rounded-2xl overflow-hidden bg-[#E8EDF2] dark:bg-[#240E23] mb-3">
+                      <div className="relative aspect-4/3 rounded-2xl overflow-hidden bg-[#240E23] mb-3">
                         <img src={item.images[0]} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                         <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-red-600 text-white text-[10px] font-bold uppercase tracking-wider">
                           LOST
                         </span>
                       </div>
-                      <h3 className="font-bold text-sm text-[#30152F] dark:text-white truncate group-hover:text-red-500 transition-colors">
+                      <h3 className="font-bold text-sm text-white truncate group-hover:text-red-400 transition-colors">
                         {item.title}
                       </h3>
-                      <p className="text-xs text-[#30152F]/70 dark:text-[#E8EDF2]/70 line-clamp-1 mt-0.5">
+                      <p className="text-xs text-[#E8EDF2]/70 line-clamp-1 mt-0.5">
                         {item.locationName}
                       </p>
-                      <div className="mt-2 pt-2 border-t border-[#30152F]/10 dark:border-[#D9A441]/20 flex items-center justify-between text-[11px] text-[#30152F]/60 dark:text-[#E8EDF2]/60">
+                      <div className="mt-2 pt-2 border-t border-[#D9A441]/20 flex items-center justify-between text-[11px] text-[#E8EDF2]/60">
                         <span>{item.date}</span>
-                        <span className="text-red-600 dark:text-red-400 font-semibold">{item.status}</span>
+                        <span className="text-red-400 font-semibold">{item.status}</span>
                       </div>
                     </Card3D>
                   ))}
                 </div>
               ) : (
-                <div className="p-8 rounded-3xl glass-card border border-[#30152F]/10 dark:border-[#D9A441]/20 bg-white/80 dark:bg-[#30152F]/70 text-center space-y-3">
-                  <p className="text-sm font-semibold text-[#30152F] dark:text-[#E8EDF2]">
+                <div className="p-8 rounded-3xl glass-card border border-[#D9A441]/20 bg-[#30152F]/80 text-center space-y-3">
+                  <p className="text-sm font-semibold text-[#E8EDF2]">
                     No lost items currently registered in the database.
                   </p>
-                  <p className="text-xs text-[#30152F]/70 dark:text-[#E8EDF2]/70">
+                  <p className="text-xs text-[#E8EDF2]/70">
                     If you misplaced an item on campus, register a report to activate AI radar scanning.
                   </p>
                   <button
@@ -583,10 +590,10 @@ function MainApp() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-bold font-display text-[#30152F] dark:text-white">
+                  <h2 className="text-xl sm:text-2xl font-bold font-display text-white">
                     Recently Found on Campus
                   </h2>
-                  <p className="text-xs text-[#30152F]/70 dark:text-[#E8EDF2]/70">
+                  <p className="text-xs text-[#E8EDF2]/70">
                     Handed over to authorized college desks (Library Counter 2 &amp; Gate 1)
                   </p>
                 </div>
@@ -605,33 +612,33 @@ function MainApp() {
                     <Card3D
                       key={item.id}
                       onClick={() => setSelectedReport(item)}
-                      className="p-4 rounded-3xl glass-card border border-[#30152F]/10 dark:border-[#D9A441]/20 bg-white/85 dark:bg-[#30152F]/80 hover:border-emerald-400 dark:hover:border-emerald-500/50 shadow-sm hover:shadow-lg cursor-pointer transition-all group"
+                      className="p-4 rounded-3xl glass-card border border-[#D9A441]/20 bg-[#30152F]/85 hover:border-emerald-500/50 shadow-sm hover:shadow-lg cursor-pointer transition-all group"
                     >
-                      <div className="relative aspect-4/3 rounded-2xl overflow-hidden bg-[#E8EDF2] dark:bg-[#240E23] mb-3">
+                      <div className="relative aspect-4/3 rounded-2xl overflow-hidden bg-[#240E23] mb-3">
                         <img src={item.images[0]} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                         <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-wider">
                           FOUND
                         </span>
                       </div>
-                      <h3 className="font-bold text-sm text-[#30152F] dark:text-white truncate group-hover:text-emerald-500 transition-colors">
+                      <h3 className="font-bold text-sm text-white truncate group-hover:text-emerald-400 transition-colors">
                         {item.title}
                       </h3>
-                      <p className="text-xs text-[#30152F]/70 dark:text-[#E8EDF2]/70 line-clamp-1 mt-0.5">
+                      <p className="text-xs text-[#E8EDF2]/70 line-clamp-1 mt-0.5">
                         Custody: {item.storageDesk || 'Main Security'}
                       </p>
-                      <div className="mt-2 pt-2 border-t border-[#30152F]/10 dark:border-[#D9A441]/20 flex items-center justify-between text-[11px] text-[#30152F]/60 dark:text-[#E8EDF2]/60">
+                      <div className="mt-2 pt-2 border-t border-[#D9A441]/20 flex items-center justify-between text-[11px] text-[#E8EDF2]/60">
                         <span>{item.date}</span>
-                        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{item.status}</span>
+                        <span className="text-emerald-400 font-semibold">{item.status}</span>
                       </div>
                     </Card3D>
                   ))}
                 </div>
               ) : (
-                <div className="p-8 rounded-3xl glass-card border border-[#30152F]/10 dark:border-[#D9A441]/20 bg-white/80 dark:bg-[#30152F]/70 text-center space-y-3">
-                  <p className="text-sm font-semibold text-[#30152F] dark:text-[#E8EDF2]">
+                <div className="p-8 rounded-3xl glass-card border border-[#D9A441]/20 bg-[#30152F]/80 text-center space-y-3">
+                  <p className="text-sm font-semibold text-[#E8EDF2]">
                     No found items currently in the registry.
                   </p>
-                  <p className="text-xs text-[#30152F]/70 dark:text-[#E8EDF2]/70">
+                  <p className="text-xs text-[#E8EDF2]/70">
                     Found an ID card, wallet, keys, or device? Help a fellow student by turning it in.
                   </p>
                   <button
@@ -645,56 +652,56 @@ function MainApp() {
             </div>
 
             {/* How It Works & AI Matching Explanation */}
-            <div className="p-8 rounded-3xl glass-panel border border-[#30152F]/15 dark:border-[#D9A441]/25 bg-white/90 dark:bg-[#30152F]/90 space-y-8">
+            <div className="p-8 rounded-3xl glass-panel border border-[#D9A441]/25 bg-[#30152F]/90 space-y-8">
               <div className="text-center max-w-2xl mx-auto space-y-2">
                 <span className="text-xs font-bold text-[#D9A441] uppercase tracking-widest">
                   Autonomous Campus Intelligence
                 </span>
-                <h2 className="text-2xl sm:text-3xl font-extrabold font-display text-[#30152F] dark:text-white">
+                <h2 className="text-2xl sm:text-3xl font-extrabold font-display text-white">
                   How GNIOT AI Lost &amp; Found Operates
                 </h2>
-                <p className="text-xs sm:text-sm text-[#30152F]/70 dark:text-[#E8EDF2]/70">
+                <p className="text-xs sm:text-sm text-[#E8EDF2]/70">
                   Four secure stages connecting report submission, multimodal vision verification, and authorized physical handovers.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="p-5 rounded-2xl bg-[#E8EDF2]/60 dark:bg-[#240E23] border border-[#30152F]/10 dark:border-[#D9A441]/20 space-y-2">
-                  <div className="w-10 h-10 rounded-xl bg-red-500/15 text-red-600 dark:text-red-400 flex items-center justify-center font-bold text-sm">
+                <div className="p-5 rounded-2xl bg-[#240E23] border border-[#D9A441]/20 space-y-2">
+                  <div className="w-10 h-10 rounded-xl bg-red-500/15 text-red-400 flex items-center justify-center font-bold text-sm">
                     01
                   </div>
-                  <h3 className="font-bold text-sm text-[#30152F] dark:text-white">Report Item</h3>
-                  <p className="text-xs text-[#30152F]/70 dark:text-[#E8EDF2]/70 leading-relaxed">
+                  <h3 className="font-bold text-sm text-white">Report Item</h3>
+                  <p className="text-xs text-[#E8EDF2]/70 leading-relaxed">
                     Submit photos, campus location (APJ Kalam Block, Library, Canteen, Labs), time, and private distinctive traits.
                   </p>
                 </div>
 
-                <div className="p-5 rounded-2xl bg-[#E8EDF2]/60 dark:bg-[#240E23] border border-[#30152F]/10 dark:border-[#D9A441]/20 space-y-2">
-                  <div className="w-10 h-10 rounded-xl bg-[#D9A441]/20 text-[#30152F] dark:text-[#D9A441] flex items-center justify-center font-bold text-sm">
+                <div className="p-5 rounded-2xl bg-[#240E23] border border-[#D9A441]/20 space-y-2">
+                  <div className="w-10 h-10 rounded-xl bg-[#D9A441]/20 text-[#D9A441] flex items-center justify-center font-bold text-sm">
                     02
                   </div>
-                  <h3 className="font-bold text-sm text-[#30152F] dark:text-white">Neural Cross-Match</h3>
-                  <p className="text-xs text-[#30152F]/70 dark:text-[#E8EDF2]/70 leading-relaxed">
+                  <h3 className="font-bold text-sm text-white">Neural Cross-Match</h3>
+                  <p className="text-xs text-[#E8EDF2]/70 leading-relaxed">
                     Gemini Vision &amp; Semantic Engine compares shapes, decals, colors, timestamps, and zone proximity to calculate scores.
                   </p>
                 </div>
 
-                <div className="p-5 rounded-2xl bg-[#E8EDF2]/60 dark:bg-[#240E23] border border-[#30152F]/10 dark:border-[#D9A441]/20 space-y-2">
-                  <div className="w-10 h-10 rounded-xl bg-[#30152F]/15 dark:bg-[#D9A441]/15 text-[#30152F] dark:text-[#D9A441] flex items-center justify-center font-bold text-sm">
+                <div className="p-5 rounded-2xl bg-[#240E23] border border-[#D9A441]/20 space-y-2">
+                  <div className="w-10 h-10 rounded-xl bg-[#D9A441]/15 text-[#D9A441] flex items-center justify-center font-bold text-sm">
                     03
                   </div>
-                  <h3 className="font-bold text-sm text-[#30152F] dark:text-white">Secret Verification</h3>
-                  <p className="text-xs text-[#30152F]/70 dark:text-[#E8EDF2]/70 leading-relaxed">
+                  <h3 className="font-bold text-sm text-white">Secret Verification</h3>
+                  <p className="text-xs text-[#E8EDF2]/70 leading-relaxed">
                     Genuine owners answer private proof questions (stickers, serial hints, contents) verified against physical items.
                   </p>
                 </div>
 
-                <div className="p-5 rounded-2xl bg-[#E8EDF2]/60 dark:bg-[#240E23] border border-[#30152F]/10 dark:border-[#D9A441]/20 space-y-2">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-sm">
+                <div className="p-5 rounded-2xl bg-[#240E23] border border-[#D9A441]/20 space-y-2">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center font-bold text-sm">
                     04
                   </div>
-                  <h3 className="font-bold text-sm text-[#30152F] dark:text-white">Authorized Handover</h3>
-                  <p className="text-xs text-[#30152F]/70 dark:text-[#E8EDF2]/70 leading-relaxed">
+                  <h3 className="font-bold text-sm text-white">Authorized Handover</h3>
+                  <p className="text-xs text-[#E8EDF2]/70 leading-relaxed">
                     Collect the item safely at GNIOT Library Counter 2 or Main Gate 1 Security Desk with digital signed receipts.
                   </p>
                 </div>
@@ -703,47 +710,47 @@ function MainApp() {
 
             {/* Campus Safety, Custody & Desks Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="p-6 rounded-3xl glass-card border border-[#30152F]/10 dark:border-[#D9A441]/20 bg-white/80 dark:bg-[#30152F]/75 space-y-4">
+              <div className="p-6 rounded-3xl glass-card border border-[#D9A441]/20 bg-[#30152F]/80 space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-2xl bg-[#D9A441]/20 text-[#30152F] dark:text-[#D9A441]">
+                  <div className="p-2.5 rounded-2xl bg-[#D9A441]/20 text-[#D9A441]">
                     <ShieldCheck className="w-6 h-6 text-[#D9A441]" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-base text-[#30152F] dark:text-white">
+                    <h3 className="font-bold text-base text-white">
                       Strict Privacy &amp; Anti-Fraud Safeguards
                     </h3>
-                    <p className="text-xs text-[#30152F]/70 dark:text-[#E8EDF2]/70">Student Protection Guarantee</p>
+                    <p className="text-xs text-[#E8EDF2]/70">Student Protection Guarantee</p>
                   </div>
                 </div>
-                <ul className="text-xs text-[#30152F]/80 dark:text-[#E8EDF2]/80 space-y-2 list-disc pl-5">
+                <ul className="text-xs text-[#E8EDF2]/80 space-y-2 list-disc pl-5">
                   <li>Student identity cards, wallets, and keys never reveal roll numbers, cash amount, or personal contact info publicly.</li>
                   <li>Proof-of-ownership answers are stored in encrypted form, accessible exclusively to authorized security administrators.</li>
                   <li>Automated duplicate detection flags suspicious repetitive reports.</li>
                 </ul>
               </div>
 
-              <div className="p-6 rounded-3xl glass-card border border-[#30152F]/10 dark:border-[#D9A441]/20 bg-white/80 dark:bg-[#30152F]/75 space-y-4">
+              <div className="p-6 rounded-3xl glass-card border border-[#D9A441]/20 bg-[#30152F]/80 space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-2xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">
+                  <div className="p-2.5 rounded-2xl bg-emerald-500/15 text-emerald-400">
                     <Building2 className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-base text-[#30152F] dark:text-white">
+                    <h3 className="font-bold text-base text-white">
                       Authorized Campus Custody Desks
                     </h3>
-                    <p className="text-xs text-[#30152F]/70 dark:text-[#E8EDF2]/70">Official Drop-off &amp; Collection Points</p>
+                    <p className="text-xs text-[#E8EDF2]/70">Official Drop-off &amp; Collection Points</p>
                   </div>
                 </div>
                 <div className="space-y-2 text-xs">
-                  <div className="p-2.5 rounded-xl bg-[#E8EDF2]/70 dark:bg-[#240E23] flex items-center justify-between">
+                  <div className="p-2.5 rounded-xl bg-[#240E23] flex items-center justify-between">
                     <span>Central Library Circulation Counter 2</span>
                     <span className="font-mono text-[10px] text-[#D9A441] font-bold">09:00 - 18:00</span>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-[#E8EDF2]/70 dark:bg-[#240E23] flex items-center justify-between">
+                  <div className="p-2.5 rounded-xl bg-[#240E23] flex items-center justify-between">
                     <span>Main Campus Gate 1 Security Cell (Knowledge Park II)</span>
-                    <span className="font-mono text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">24 / 7 Active</span>
+                    <span className="font-mono text-[10px] text-emerald-400 font-bold">24 / 7 Active</span>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-[#E8EDF2]/70 dark:bg-[#240E23] flex items-center justify-between">
+                  <div className="p-2.5 rounded-xl bg-[#240E23] flex items-center justify-between">
                     <span>Block B CS &amp; AI Tech Labs Assistant Cabin</span>
                     <span className="font-mono text-[10px] text-[#D9A441] font-bold">Lab Hours</span>
                   </div>
@@ -752,48 +759,48 @@ function MainApp() {
             </div>
 
             {/* Frequently Asked Questions */}
-            <div className="p-8 rounded-3xl glass-panel border border-[#30152F]/15 dark:border-[#D9A441]/25 bg-white/90 dark:bg-[#30152F]/90 space-y-6">
+            <div className="p-8 rounded-3xl glass-panel border border-[#D9A441]/25 bg-[#30152F]/90 space-y-6">
               <div className="flex items-center gap-2 text-[#D9A441] text-xs font-bold uppercase tracking-wider">
                 <HelpCircle className="w-4 h-4" />
                 Frequently Asked Questions
               </div>
-              <h2 className="text-2xl font-bold font-display text-[#30152F] dark:text-white">
+              <h2 className="text-2xl font-bold font-display text-white">
                 Everything You Need to Know
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                <div className="p-4 rounded-2xl bg-[#E8EDF2]/60 dark:bg-[#240E23] border border-[#30152F]/10 dark:border-[#D9A441]/20 space-y-1.5">
-                  <h4 className="font-bold text-sm text-[#30152F] dark:text-white">
+                <div className="p-4 rounded-2xl bg-[#240E23] border border-[#D9A441]/20 space-y-1.5">
+                  <h4 className="font-bold text-sm text-white">
                     What if I lost an item without knowing the exact room?
                   </h4>
-                  <p className="text-[#30152F]/70 dark:text-[#E8EDF2]/70 leading-relaxed">
+                  <p className="text-[#E8EDF2]/70 leading-relaxed">
                     Select the nearest campus building (e.g. Main Academic Block or Canteen). The AI spatial algorithm checks all rooms in that sector.
                   </p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#E8EDF2]/60 dark:bg-[#240E23] border border-[#30152F]/10 dark:border-[#D9A441]/20 space-y-1.5">
-                  <h4 className="font-bold text-sm text-[#30152F] dark:text-white">
+                <div className="p-4 rounded-2xl bg-[#240E23] border border-[#D9A441]/20 space-y-1.5">
+                  <h4 className="font-bold text-sm text-white">
                     Can someone falsely claim my lost phone or wallet?
                   </h4>
-                  <p className="text-[#30152F]/70 dark:text-[#E8EDF2]/70 leading-relaxed">
+                  <p className="text-[#E8EDF2]/70 leading-relaxed">
                     No. The claimant must submit the secret distinctive verification clue (lockscreen wallpaper, sticker, or serial digits) and show their GNIOT ID card at the desk.
                   </p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#E8EDF2]/60 dark:bg-[#240E23] border border-[#30152F]/10 dark:border-[#D9A441]/20 space-y-1.5">
-                  <h4 className="font-bold text-sm text-[#30152F] dark:text-white">
+                <div className="p-4 rounded-2xl bg-[#240E23] border border-[#D9A441]/20 space-y-1.5">
+                  <h4 className="font-bold text-sm text-white">
                     How does the AI Visual Search work?
                   </h4>
-                  <p className="text-[#30152F]/70 dark:text-[#E8EDF2]/70 leading-relaxed">
+                  <p className="text-[#E8EDF2]/70 leading-relaxed">
                     Upload any photo from your phone. Our Gemini vision model extracts category, color palette, brand logo, and text marks, comparing them across the stored database.
                   </p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#E8EDF2]/60 dark:bg-[#240E23] border border-[#30152F]/10 dark:border-[#D9A441]/20 space-y-1.5">
-                  <h4 className="font-bold text-sm text-[#30152F] dark:text-white">
+                <div className="p-4 rounded-2xl bg-[#240E23] border border-[#D9A441]/20 space-y-1.5">
+                  <h4 className="font-bold text-sm text-white">
                     Where do I hand over an item I found?
                   </h4>
-                  <p className="text-[#30152F]/70 dark:text-[#E8EDF2]/70 leading-relaxed">
+                  <p className="text-[#E8EDF2]/70 leading-relaxed">
                     Please bring it to Central Library Counter 2 or Main Campus Gate 1 Security Desk so staff can securely store it and notify the matched student.
                   </p>
                 </div>

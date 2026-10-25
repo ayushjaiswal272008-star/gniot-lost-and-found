@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
-  Bot, 
   X, 
   Send, 
   Sparkles, 
@@ -144,7 +143,7 @@ export const AIAssistantChat: React.FC<AIAssistantChatProps> = ({
           aria-label="Open AI Campus Assistant"
         >
           <div className="relative">
-            <Bot className="w-6 h-6 text-[#D9A441]" />
+            <Sparkles className="w-6 h-6 text-[#D9A441]" />
             <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#D9A441] ring-2 ring-[#30152F] animate-pulse" />
           </div>
           <div className="hidden sm:flex flex-col text-left">
@@ -163,7 +162,7 @@ export const AIAssistantChat: React.FC<AIAssistantChatProps> = ({
           <div className="p-4 bg-gradient-to-r from-[#30152F] via-[#481E46] to-[#250E24] text-[#E8EDF2] flex items-center justify-between border-b border-[#D9A441]/25">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-[#D9A441]/20 border border-[#D9A441]/40 flex items-center justify-center backdrop-blur-md">
-                <Bot className="w-5 h-5 text-[#D9A441]" />
+                <Sparkles className="w-5 h-5 text-[#D9A441]" />
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
