@@ -95,7 +95,24 @@ CREATE TABLE IF NOT EXISTS public.reports (
 );
 
 -- -------------------------------------------------------------------------
--- 4. CLAIMS TABLE
+-- 3B. ITEM PRIVATE DETAILS (SECRET CLUES - RESTRICTED ACCESS)
+-- Never exposed to public listing queries
+-- -------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.item_private_details (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  item_id TEXT NOT NULL REFERENCES public.reports(id) ON DELETE CASCADE,
+  owner_id TEXT NOT NULL,
+  secret_clue TEXT NOT NULL,
+  serial_number_or_mac TEXT,
+  proof_document_url TEXT,
+  private_notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT uq_item_private_details UNIQUE (item_id)
+);
+
+-- -------------------------------------------------------------------------
+-- 4. CLAIMS TABLE (8-STATE VERIFICATION WORKFLOW)
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.claims (
   id TEXT PRIMARY KEY,
@@ -111,14 +128,51 @@ CREATE TABLE IF NOT EXISTS public.claims (
   distinctive_mark_answer TEXT,
   serial_number_or_id_clue TEXT,
   uploaded_proof_image TEXT,
-  status TEXT NOT NULL DEFAULT 'Verification Pending' CHECK (status IN ('Claim Pending', 'Verification Pending', 'Approved', 'Rejected', 'Resolved')),
+  status TEXT NOT NULL DEFAULT 'claim_submitted' CHECK (
+    status IN (
+      'potential_match',
+      'claim_submitted',
+      'under_review',
+      'additional_evidence_requested',
+      'approved',
+      'rejected',
+      'handed_over',
+      'closed',
+      'Claim Pending',
+      'Verification Pending',
+      'Approved',
+      'Rejected',
+      'Resolved'
+    )
+  ),
   admin_notes TEXT,
+  reviewer_id TEXT,
+  reviewer_name TEXT,
+  handover_officer TEXT,
+  handover_desk TEXT,
+  handover_receipt_id TEXT,
+  resolution_feedback TEXT,
   resolved_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- -------------------------------------------------------------------------
--- 5. AI MATCHES TABLE
+-- 4B. CLAIM EVIDENCE TABLE (RECEIPTS, PHOTOS, BOX SERIALS)
+-- -------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.claim_evidence (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  claim_id TEXT NOT NULL REFERENCES public.claims(id) ON DELETE CASCADE,
+  file_url TEXT NOT NULL,
+  file_name TEXT NOT NULL,
+  file_type TEXT NOT NULL,
+  uploaded_by TEXT NOT NULL,
+  description TEXT,
+  uploaded_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- -------------------------------------------------------------------------
+-- 5. AI MATCHES TABLE (WITH FACTOR BREAKDOWN & DEDUPLICATION)
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.ai_matches (
   id TEXT PRIMARY KEY,
@@ -132,9 +186,14 @@ CREATE TABLE IF NOT EXISTS public.ai_matches (
   visual_score INTEGER,
   semantic_score INTEGER,
   location_proximity_score INTEGER,
+  category_score INTEGER,
+  date_score INTEGER,
+  factors JSONB,
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected', 'dismissed')),
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT uq_lost_found_match_pair UNIQUE (lost_report_id, found_report_id)
 );
+
 
 -- -------------------------------------------------------------------------
 -- 6. NOTIFICATIONS TABLE
@@ -185,18 +244,20 @@ ON CONFLICT (id) DO NOTHING;
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.campus_locations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.item_private_details ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.claims ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.claim_evidence ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ai_matches ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 
--- Helper function: is current user an admin?
+-- Helper function: is current user an admin or custodian?
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN AS $$
 BEGIN
   RETURN EXISTS (
     SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() AND role = 'admin'
+    WHERE id = auth.uid() AND role IN ('admin', 'custodian')
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -232,6 +293,22 @@ CREATE POLICY "Report owners or admins delete reports" ON public.reports FOR DEL
   auth.uid()::text = user_id OR public.is_admin()
 );
 
+-- Item Private Details: Strictly restricted to report owner or admin
+DROP POLICY IF EXISTS "Private clues read" ON public.item_private_details;
+CREATE POLICY "Private clues read" ON public.item_private_details FOR SELECT USING (
+  auth.uid()::text = owner_id OR public.is_admin() OR auth.uid() IS NULL
+);
+
+DROP POLICY IF EXISTS "Private clues insert" ON public.item_private_details;
+CREATE POLICY "Private clues insert" ON public.item_private_details FOR INSERT WITH CHECK (
+  auth.uid()::text = owner_id OR auth.uid() IS NULL
+);
+
+DROP POLICY IF EXISTS "Private clues update" ON public.item_private_details;
+CREATE POLICY "Private clues update" ON public.item_private_details FOR UPDATE USING (
+  auth.uid()::text = owner_id OR public.is_admin() OR auth.uid() IS NULL
+);
+
 -- Claims: Claimant, Report Owner, or Admin can read claims
 DROP POLICY IF EXISTS "Claims read" ON public.claims;
 CREATE POLICY "Claims read" ON public.claims FOR SELECT USING (
@@ -247,6 +324,24 @@ CREATE POLICY "Claims insert" ON public.claims FOR INSERT WITH CHECK (true);
 DROP POLICY IF EXISTS "Claims update" ON public.claims;
 CREATE POLICY "Claims update" ON public.claims FOR UPDATE USING (
   auth.uid()::text = claimant_id OR public.is_admin() OR auth.uid() IS NULL
+);
+
+-- Claim Evidence: Claimant or Admin only
+DROP POLICY IF EXISTS "Claim evidence select" ON public.claim_evidence;
+CREATE POLICY "Claim evidence select" ON public.claim_evidence FOR SELECT USING (
+  auth.uid()::text = uploaded_by 
+  OR public.is_admin()
+  OR EXISTS (
+    SELECT 1 FROM public.claims 
+    WHERE claims.id = claim_evidence.claim_id 
+    AND (claims.claimant_id = auth.uid()::text OR public.is_admin())
+  )
+  OR auth.uid() IS NULL
+);
+
+DROP POLICY IF EXISTS "Claim evidence insert" ON public.claim_evidence;
+CREATE POLICY "Claim evidence insert" ON public.claim_evidence FOR INSERT WITH CHECK (
+  auth.uid()::text = uploaded_by OR auth.uid() IS NULL
 );
 
 -- AI Matches: Public read for item matches
@@ -275,11 +370,15 @@ DROP POLICY IF EXISTS "Audit logs insert" ON public.audit_logs;
 CREATE POLICY "Audit logs insert" ON public.audit_logs FOR INSERT WITH CHECK (true);
 
 -- -------------------------------------------------------------------------
--- STORAGE BUCKET: item-images (Photos for Lost & Found items)
+-- STORAGE BUCKETS: item-images (Public) & claim-evidence (Private)
 -- -------------------------------------------------------------------------
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('item-images', 'item-images', true)
 ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('claim-evidence', 'claim-evidence', false)
+ON CONFLICT (id) DO UPDATE SET public = false;
 
 -- Public can view images in item-images bucket
 DROP POLICY IF EXISTS "Public images view" ON storage.objects;
@@ -288,3 +387,14 @@ CREATE POLICY "Public images view" ON storage.objects FOR SELECT USING (bucket_i
 -- Anyone can upload to item-images bucket
 DROP POLICY IF EXISTS "Images upload" ON storage.objects;
 CREATE POLICY "Images upload" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'item-images');
+
+-- Private access to claim-evidence bucket
+DROP POLICY IF EXISTS "Evidence objects read" ON storage.objects;
+CREATE POLICY "Evidence objects read" ON storage.objects FOR SELECT USING (
+  bucket_id = 'claim-evidence' AND (auth.uid() IS NOT NULL OR public.is_admin())
+);
+
+DROP POLICY IF EXISTS "Evidence objects upload" ON storage.objects;
+CREATE POLICY "Evidence objects upload" ON storage.objects FOR INSERT WITH CHECK (
+  bucket_id = 'claim-evidence'
+);

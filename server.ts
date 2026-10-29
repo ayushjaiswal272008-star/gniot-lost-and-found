@@ -585,37 +585,56 @@ app.post('/api/claims', (req: Request, res: Response) => {
   res.status(201).json({ claim: newClaim, message: 'Ownership claim submitted for campus authority review.' });
 });
 
-// Verify & Resolve Claim
+// Verify & Transition Claim State (8-State Workflow)
 app.post('/api/claims/:id/verify', (req: Request, res: Response) => {
-  const { action, adminNotes, performedBy } = req.body; // action: 'approve' | 'reject' | 'resolve'
+  const { action, adminNotes, performedBy, handoverOfficer, handoverDesk, handoverReceiptId } = req.body;
   const claim = claims.find(c => c.id === req.params.id);
   if (!claim) {
     return res.status(404).json({ error: 'Claim not found' });
   }
 
   const report = reports.find(r => r.id === claim.reportId);
+  const prevStatus = claim.status;
 
-  if (action === 'approve') {
-    claim.status = 'Approved';
-    claim.adminNotes = adminNotes || 'Proof and secret marks verified by campus lost-property authority.';
+  if (action === 'approve' || action === 'approved') {
+    claim.status = 'approved';
+    claim.adminNotes = adminNotes || 'Proof and secret marks independently verified by campus lost-property authority.';
     if (report) report.status = 'Verification Pending';
-  } else if (action === 'resolve') {
-    claim.status = 'Resolved';
+  } else if (action === 'resolve' || action === 'handed_over') {
+    claim.status = 'handed_over';
     claim.resolvedAt = new Date().toISOString();
-    claim.adminNotes = adminNotes || 'Physical item successfully handed over and signed return receipt registered.';
+    claim.handoverOfficer = handoverOfficer || 'Officer R. Sharma (Gate 1 Security Cell)';
+    claim.handoverDesk = handoverDesk || (report?.storageDesk || 'Main Security Desk');
+    claim.handoverReceiptId = handoverReceiptId || `GNIOT-RCP-${Math.floor(1000 + Math.random() * 9000)}`;
+    claim.adminNotes = adminNotes || `Physical item successfully handed over upon GNIOT ID verification. Receipt: ${claim.handoverReceiptId}`;
     if (report) report.status = 'Resolved';
-  } else if (action === 'reject') {
-    claim.status = 'Rejected';
-    claim.adminNotes = adminNotes || 'Provided verification answers do not match item records.';
+  } else if (action === 'reject' || action === 'rejected') {
+    claim.status = 'rejected';
+    claim.adminNotes = adminNotes || 'Provided verification answers do not match custody item records.';
     if (report) report.status = 'Open';
+  } else if (action === 'under_review') {
+    claim.status = 'under_review';
+    claim.adminNotes = adminNotes || 'Claim is actively being assessed by campus custodian.';
+    if (report) report.status = 'Verification Pending';
+  } else if (action === 'additional_evidence_requested') {
+    claim.status = 'additional_evidence_requested';
+    claim.adminNotes = adminNotes || 'Additional purchase receipt or identifying proof requested from claimant.';
+    if (report) report.status = 'Verification Pending';
+  } else if (action === 'closed') {
+    claim.status = 'closed';
+    claim.resolvedAt = new Date().toISOString();
+    claim.adminNotes = adminNotes || 'File officially closed.';
+    if (report) report.status = 'Resolved';
   }
+
+  claim.updatedAt = new Date().toISOString();
 
   auditLogs.unshift({
     id: `audit-${Date.now()}`,
     action: `CLAIM_${action.toUpperCase()}`,
     performedBy: performedBy || 'Admin Security Incharge',
     targetId: claim.id,
-    details: `Claim ${claim.id} status updated to ${claim.status}. Note: ${claim.adminNotes}`,
+    details: `Claim ${claim.id} transitioned from "${prevStatus}" to "${claim.status}". Note: ${claim.adminNotes}`,
     timestamp: new Date().toISOString()
   });
 
@@ -623,15 +642,17 @@ app.post('/api/claims/:id/verify', (req: Request, res: Response) => {
     id: `notif-${Date.now()}`,
     userId: claim.claimantId,
     title: `Claim Update: ${claim.status}`,
-    message: `Your claim on ${claim.itemTitle} has been updated to "${claim.status}".`,
+    message: `Your claim on "${claim.itemTitle}" has been updated to "${claim.status}". ${claim.adminNotes ? `Note: ${claim.adminNotes}` : ''}`,
     type: 'claim',
     reportId: claim.reportId,
+    claimId: claim.id,
     isRead: false,
     createdAt: new Date().toISOString()
   });
 
   res.json({ success: true, claim, reportStatus: report?.status });
 });
+
 
 // 8. AI Campus Assistant Chatbot (GNIOT AURA)
 app.post('/api/gemini/chat', async (req: Request, res: Response) => {

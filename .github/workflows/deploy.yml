@@ -42,8 +42,8 @@ jobs:
 
       - name: Build site with Vite
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || vars.VITE_SUPABASE_URL || '' }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || vars.VITE_SUPABASE_ANON_KEY || '' }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || vars.VITE_SUPABASE_URL || 'https://yvdztwjlikuzozkhplcb.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || vars.VITE_SUPABASE_ANON_KEY || 'sb_publishable_Pe4q1amclemMHvOh2octDg_wCXGNVQa' }}
           VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL || vars.VITE_BACKEND_URL || '' }}
         run: npm run build
 

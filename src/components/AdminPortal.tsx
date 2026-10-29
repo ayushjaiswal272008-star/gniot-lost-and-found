@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { isBackendConfigured, getBackendBaseUrl } from '../services/apiConfig';
+import { DataService } from '../services/dataService';
 import { 
   ShieldAlert, 
   CheckCircle2, 
@@ -252,94 +253,225 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
       </div>
 
-      {/* Tab 1: Claims Review */}
+      {/* Tab 1: Claims Review (8-State Verification Workflow) */}
       {adminTab === 'claims' && (
         <div className="space-y-4">
-          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-900 dark:text-amber-200">
-            <strong>Ownership Verification Directive:</strong> Cross-reference the claimant&apos;s answer with the hidden secret clue recorded by the finder before approving physical handover.
+          <div className="p-4 rounded-2xl bg-[#D9A441]/10 border border-[#D9A441]/25 text-xs text-[#30152F] dark:text-[#E8EDF2] flex items-start gap-2.5">
+            <ShieldAlert className="w-5 h-5 text-[#D9A441] shrink-0 mt-0.5" />
+            <div className="leading-relaxed">
+              <strong>Campus Custody &amp; Verification Directive:</strong> Cross-reference claimant-submitted answers with the locked private clue stored in the confidential vault. Never approve physical handover without inspecting student College ID card and signing the handover register.
+            </div>
           </div>
 
           <div className="space-y-3">
             {claims.map(claim => {
               const targetReport = reports.find(r => r.id === claim.reportId);
+              const isResolved = claim.status === 'handed_over' || claim.status === 'closed' || claim.status === 'Resolved';
               return (
                 <div
                   key={claim.id}
-                  className="p-5 rounded-2xl glass-card border border-slate-200 dark:border-slate-800 space-y-3"
+                  className="p-5 rounded-2xl bg-white dark:bg-[#250D24] border border-slate-300 dark:border-[#D9A441]/25 space-y-3 shadow-md"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-xs font-bold text-slate-400">{claim.id}</span>
-                        <h4 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
+                        <h4 className="font-bold text-sm sm:text-base text-[#30152F] dark:text-white">
                           Claim for: {claim.itemTitle} ({claim.reportId})
                         </h4>
                       </div>
-                      <p className="text-xs text-slate-500 mt-0.5">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                         Claimant: <strong>{claim.claimantName}</strong> ({claim.claimantRollNo}) • Email: {claim.claimantEmail}
                       </p>
                     </div>
 
+                    {/* 8-State Badge */}
                     <span className={`self-start sm:self-center px-3 py-1 rounded-full text-xs font-bold ${
-                      claim.status === 'Resolved' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50' :
-                      claim.status === 'Approved' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50' :
-                      claim.status === 'Rejected' ? 'bg-red-100 text-red-700 dark:bg-red-900/50' :
-                      'bg-amber-100 text-amber-700 dark:bg-amber-900/50'
+                      claim.status === 'handed_over' || claim.status === 'closed' || claim.status === 'Resolved' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' :
+                      claim.status === 'approved' || claim.status === 'Approved' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300' :
+                      claim.status === 'additional_evidence_requested' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300' :
+                      claim.status === 'rejected' || claim.status === 'Rejected' ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300' :
+                      'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300'
                     }`}>
                       {claim.status}
                     </span>
                   </div>
 
+                  {/* Multi-Factor Ownership Confidence Breakdown */}
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#1E0B1D] border border-slate-200 dark:border-slate-800 text-xs space-y-1.5">
+                    <div className="font-bold text-[#D9A441] flex items-center justify-between text-[11px]">
+                      <span>Ownership Verification Multi-Factor Check:</span>
+                      <span className="text-[10px] text-slate-400">Independent Factors</span>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                      <div className="p-1.5 rounded-lg bg-white dark:bg-[#280F27] border border-slate-200 dark:border-slate-800">
+                        <span className="text-slate-500 block text-[9px]">Distinguishing Clue:</span>
+                        <span className="font-semibold text-slate-800 dark:text-slate-200">
+                          {claim.distinctiveMarkAnswer ? 'Submitted' : 'None'}
+                        </span>
+                      </div>
+                      <div className="p-1.5 rounded-lg bg-white dark:bg-[#280F27] border border-slate-200 dark:border-slate-800">
+                        <span className="text-slate-500 block text-[9px]">Serial / ID Clue:</span>
+                        <span className="font-semibold text-slate-800 dark:text-slate-200">
+                          {claim.serialNumberOrIdClue ? 'Present' : 'Not Given'}
+                        </span>
+                      </div>
+                      <div className="p-1.5 rounded-lg bg-white dark:bg-[#280F27] border border-slate-200 dark:border-slate-800">
+                        <span className="text-slate-500 block text-[9px]">Proof Document:</span>
+                        <span className="font-semibold text-slate-800 dark:text-slate-200">
+                          {claim.uploadedProofImage ? 'Uploaded' : 'Pending'}
+                        </span>
+                      </div>
+                      <div className="p-1.5 rounded-lg bg-white dark:bg-[#280F27] border border-slate-200 dark:border-slate-800">
+                        <span className="text-slate-500 block text-[9px]">Desk Review:</span>
+                        <span className="font-semibold text-[#D9A441]">
+                          {claim.reviewerName ? 'Verified' : 'Under Assessment'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                     <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
                       <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">
-                        Claimant&apos;s Proof Answer:
+                        Claimant&apos;s Independent Proof Answer:
                       </span>
                       <p className="font-medium text-slate-800 dark:text-slate-200">{claim.distinctiveMarkAnswer}</p>
                       {claim.serialNumberOrIdClue && (
                         <p className="text-slate-500 mt-1">Serial/ID Clue: {claim.serialNumberOrIdClue}</p>
                       )}
+                      {claim.proofDescription && (
+                        <p className="text-slate-500 mt-1">Context: {claim.proofDescription}</p>
+                      )}
+                      {claim.uploadedProofImage && (
+                        <div className="mt-2">
+                          <span className="text-[10px] font-bold text-[#D9A441] block mb-1">Attached Evidence:</span>
+                          <a
+                            href={claim.uploadedProofImage}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-indigo-500 underline flex items-center gap-1"
+                          >
+                            View Evidence File <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                      )}
                     </div>
 
                     {targetReport && (
-                      <div className="p-3 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60">
-                        <span className="text-[10px] text-indigo-500 uppercase font-bold block mb-1">
-                          Finder&apos;s Stored Secret Clue:
-                        </span>
-                        <p className="font-semibold text-indigo-900 dark:text-indigo-200">
-                          {targetReport.hiddenVerificationClue || 'No secret clue stored (General Inspection)'}
+                      <div className="p-3 rounded-xl bg-[#D9A441]/10 dark:bg-[#2B112A] border border-[#D9A441]/30">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[10px] text-[#D9A441] uppercase font-bold">
+                            Locked Secret Clue (Custody Ledger):
+                          </span>
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#D9A441]/20 text-[#D9A441] font-mono">
+                            Admin Only
+                          </span>
+                        </div>
+                        <p className="font-semibold text-[#30152F] dark:text-[#E8EDF2]">
+                          {targetReport.distinctiveFeatures || targetReport.hiddenVerificationClue || 'No secret clue recorded on file'}
                         </p>
-                        <p className="text-indigo-600 dark:text-indigo-400 text-[11px] mt-1">
-                          Storage: {targetReport.storageDesk || 'Main Security Desk'}
+                        <p className="text-[#30152F]/70 dark:text-[#E8EDF2]/70 text-[11px] mt-1.5">
+                          Physical Storage: <strong>{targetReport.storageDesk || 'Main Security Desk'}</strong>
                         </p>
+                        {claim.handoverReceiptId && (
+                          <p className="text-emerald-600 dark:text-emerald-400 text-[11px] mt-1 font-mono font-bold">
+                            Handover Receipt: {claim.handoverReceiptId}
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>
 
-                  {/* Verification Actions */}
-                  {claim.status !== 'Resolved' && (
-                    <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
-                      {claim.status !== 'Approved' && (
+                  {/* 8-State Workflow Transition Buttons */}
+                  {!isResolved && (
+                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+                      {/* 1. Under Review */}
+                      {claim.status === 'claim_submitted' && (
                         <button
-                          onClick={() => onVerifyClaim(claim.id, 'approve', 'Secret mark verified by campus authority')}
-                          className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-all"
+                          onClick={async () => {
+                            await DataService.updateClaimState(claim.id, 'under_review', {
+                              adminNotes: 'Assessing claimant distinguishing marks against custody item',
+                              reviewerName: 'Campus Security Officer'
+                            });
+                            onVerifyClaim(claim.id, 'approve', 'Under active custody review');
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-[#190918] font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm"
                         >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          Approve Verification
+                          <History className="w-3.5 h-3.5" />
+                          Mark Under Review
                         </button>
                       )}
 
+                      {/* 2. Request Evidence */}
+                      {claim.status !== 'additional_evidence_requested' && claim.status !== 'approved' && (
+                        <button
+                          onClick={async () => {
+                            const note = prompt('Enter request note for the claimant (e.g. Please upload original invoice or box photo):');
+                            if (note) {
+                              await DataService.updateClaimState(claim.id, 'additional_evidence_requested', {
+                                adminNotes: note,
+                                reviewerName: 'Campus Security Officer'
+                              });
+                              onVerifyClaim(claim.id, 'approve', note);
+                            }
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-purple-100 dark:bg-purple-900/40 hover:bg-purple-200 text-purple-700 dark:text-purple-300 text-xs font-semibold flex items-center gap-1.5 transition-all"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          Request Evidence
+                        </button>
+                      )}
+
+                      {/* 3. Approve */}
+                      {claim.status !== 'approved' && (
+                        <button
+                          onClick={async () => {
+                            await DataService.updateClaimState(claim.id, 'approved', {
+                              adminNotes: 'Secret distinguishing mark independently confirmed by campus custodian',
+                              reviewerName: 'Campus Security Officer'
+                            });
+                            onVerifyClaim(claim.id, 'approve', 'Secret mark verified by campus authority');
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          Approve Ownership
+                        </button>
+                      )}
+
+                      {/* 4. Complete Handover */}
                       <button
-                        onClick={() => onVerifyClaim(claim.id, 'resolve', 'Physical item delivered to verified student')}
-                        className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-all"
+                        onClick={async () => {
+                          const receiptId = `GNIOT-RCP-${Math.floor(1000 + Math.random() * 9000)}`;
+                          await DataService.updateClaimState(claim.id, 'handed_over', {
+                            adminNotes: `Physical item surrendered to student upon GNIOT ID verification. Handover Receipt: ${receiptId}`,
+                            handoverOfficer: 'Officer R. Sharma (Gate 1 Security Cell)',
+                            handoverDesk: targetReport?.storageDesk || 'Main Campus Security Gate 1',
+                            handoverReceiptId: receiptId,
+                            reviewerName: 'Campus Security Incharge'
+                          });
+                          onVerifyClaim(claim.id, 'resolve', `Reunited with verified claimant. Receipt: ${receiptId}`);
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" />
-                        Confirm Reunited / Return Item
+                        Complete Handover (Sign Receipt)
                       </button>
 
-                      {claim.status !== 'Rejected' && (
+                      {/* 5. Reject */}
+                      {claim.status !== 'rejected' && (
                         <button
-                          onClick={() => onVerifyClaim(claim.id, 'reject', 'Clue mismatch')}
+                          onClick={async () => {
+                            const reason = prompt('Reason for rejection (e.g. Clue mismatch, non-matching serial number):', 'Clue mismatch');
+                            if (reason) {
+                              await DataService.updateClaimState(claim.id, 'rejected', {
+                                adminNotes: reason,
+                                reviewerName: 'Campus Security Officer'
+                              });
+                              onVerifyClaim(claim.id, 'reject', reason);
+                            }
+                          }}
                           className="px-3 py-1.5 rounded-xl bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-900/40 dark:text-red-300 text-xs font-semibold flex items-center gap-1.5 transition-all"
                         >
                           <XCircle className="w-3.5 h-3.5" />
@@ -354,6 +486,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
           </div>
         </div>
       )}
+
 
       {/* Tab 2: All Reports Management */}
       {adminTab === 'reports' && (

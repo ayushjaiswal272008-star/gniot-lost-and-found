@@ -139,11 +139,11 @@ export const AIAssistantChat: React.FC<AIAssistantChatProps> = ({
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-40 p-4 rounded-2xl bg-gradient-to-r from-[#30152F] via-[#481E46] to-[#D9A441] text-[#E8EDF2] shadow-2xl shadow-[#30152F]/40 hover:scale-105 active:scale-95 transition-all flex items-center gap-3 group border border-[#D9A441]/40"
+          className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-40 p-3 sm:p-4 rounded-2xl bg-gradient-to-r from-[#30152F] via-[#481E46] to-[#D9A441] text-[#E8EDF2] shadow-2xl shadow-[#30152F]/40 hover:scale-105 active:scale-95 transition-all flex items-center gap-2.5 sm:gap-3 group border border-[#D9A441]/40"
           aria-label="Open AI Campus Assistant"
         >
           <div className="relative">
-            <Sparkles className="w-6 h-6 text-[#D9A441]" />
+            <Sparkles className="w-5 sm:w-6 h-5 sm:h-6 text-[#D9A441]" />
             <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#D9A441] ring-2 ring-[#30152F] animate-pulse" />
           </div>
           <div className="hidden sm:flex flex-col text-left">
@@ -157,7 +157,7 @@ export const AIAssistantChat: React.FC<AIAssistantChatProps> = ({
 
       {/* Floating Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-4 right-4 z-50 w-[94vw] sm:w-[420px] h-[580px] max-h-[85vh] bg-[#E8EDF2] dark:bg-[#1E0B1D] rounded-3xl border border-slate-300 dark:border-[#D9A441]/30 shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
+        <div className="fixed bottom-20 sm:bottom-4 right-2 sm:right-4 z-50 w-[94vw] sm:w-[420px] h-[550px] sm:h-[580px] max-h-[82vh] bg-[#E8EDF2] dark:bg-[#1E0B1D] rounded-3xl border border-slate-300 dark:border-[#D9A441]/30 shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
           {/* Header */}
           <div className="p-4 bg-gradient-to-r from-[#30152F] via-[#481E46] to-[#250E24] text-[#E8EDF2] flex items-center justify-between border-b border-[#D9A441]/25">
             <div className="flex items-center gap-3">

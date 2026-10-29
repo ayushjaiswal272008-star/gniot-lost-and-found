@@ -4,16 +4,23 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 const DEFAULT_SUPABASE_URL = 'https://yvdztwjlikuzozkhplcb.supabase.co';
 const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_Pe4q1amclemMHvOh2octDg_wCXGNVQa';
 
-// Environment variable retrieval with fallback
-const envUrl = (import.meta.env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL).trim();
-const envAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY).trim();
+// Safe environment variable retrieval with project fallback
+const rawUrl = typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_URL 
+  ? String(import.meta.env.VITE_SUPABASE_URL).trim() 
+  : '';
+const rawKey = typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_ANON_KEY 
+  ? String(import.meta.env.VITE_SUPABASE_ANON_KEY).trim() 
+  : '';
+
+const envUrl = rawUrl && rawUrl.startsWith('https://') ? rawUrl : DEFAULT_SUPABASE_URL;
+const envAnonKey = rawKey && rawKey.length > 15 ? rawKey : DEFAULT_SUPABASE_ANON_KEY;
 
 // Validation: check if Supabase URL and Key are provided
 export const isSupabaseConfigured: boolean = Boolean(
   envUrl &&
   envAnonKey &&
   envUrl.startsWith('https://') &&
-  envAnonKey.length > 20
+  envAnonKey.length > 15
 );
 
 export const supabaseUrl = envUrl;
@@ -149,3 +156,94 @@ export async function uploadItemImage(
     });
   }
 }
+
+/**
+ * Uploads ownership verification evidence (receipt, serial number photo, proof document)
+ * to private Supabase Storage bucket 'claim-evidence'.
+ */
+export async function uploadClaimEvidence(
+  file: File,
+  claimId: string,
+  userId?: string
+): Promise<{ url: string; path?: string; fileName: string; fileType: string; error?: string }> {
+  const fileName = file.name || 'evidence-document';
+  const fileType = file.type || 'image/jpeg';
+
+  if (!isSupabaseConfigured || !supabase) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve({
+        url: reader.result as string,
+        fileName,
+        fileType
+      });
+      reader.onerror = () => resolve({ url: '', fileName, fileType, error: 'Failed to read file' });
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Validate file size (max 10MB for documents/receipts)
+  if (file.size > 10 * 1024 * 1024) {
+    return { url: '', fileName, fileType, error: 'Evidence file must be smaller than 10MB' };
+  }
+
+  try {
+    const fileExt = fileName.split('.').pop() || 'jpg';
+    const safeExt = fileExt.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const cleanPath = `claims/${claimId}/${userId || 'claimant'}_${Date.now()}.${safeExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('claim-evidence')
+      .upload(cleanPath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (uploadError) {
+      console.warn('claim-evidence bucket upload fallback to dataURL:', uploadError.message);
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve({
+          url: reader.result as string,
+          fileName,
+          fileType
+        });
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // Generate signed URL with 7 days validity for authorized access
+    const { data: signedData, error: signError } = await supabase.storage
+      .from('claim-evidence')
+      .createSignedUrl(cleanPath, 60 * 60 * 24 * 7);
+
+    if (signError || !signedData?.signedUrl) {
+      const { data: pubData } = supabase.storage.from('claim-evidence').getPublicUrl(cleanPath);
+      return {
+        url: pubData.publicUrl,
+        path: cleanPath,
+        fileName,
+        fileType
+      };
+    }
+
+    return {
+      url: signedData.signedUrl,
+      path: cleanPath,
+      fileName,
+      fileType
+    };
+  } catch (err: any) {
+    console.warn('Storage upload exception, fallback to base64:', err);
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve({
+        url: reader.result as string,
+        fileName,
+        fileType
+      });
+      reader.readAsDataURL(file);
+    });
+  }
+}
+

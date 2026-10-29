@@ -6,4 +6,5 @@ export {
   supabaseAnonKey,
   testSupabaseConnection,
   uploadItemImage,
+  uploadClaimEvidence,
 } from '../lib/supabase';

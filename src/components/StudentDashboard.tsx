@@ -64,9 +64,15 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
     }
   };
 
-  const myLostReports = reports.filter(r => r.type === 'lost' && (r.userId === currentUser.id || r.userEmail === currentUser.email || r.userName.includes(currentUser.name)));
-  const myFoundReports = reports.filter(r => r.type === 'found' && (r.userId === currentUser.id || r.userEmail === currentUser.email || r.userName.includes(currentUser.name)));
-  const myClaims = claims.filter(c => c.claimantId === currentUser.id || c.claimantEmail === currentUser.email || c.claimantName.includes(currentUser.name));
+  const myLostReports = isAuthenticated && currentUser.id
+    ? reports.filter(r => r.type === 'lost' && (r.userId === currentUser.id || (Boolean(currentUser.email) && r.userEmail === currentUser.email)))
+    : [];
+  const myFoundReports = isAuthenticated && currentUser.id
+    ? reports.filter(r => r.type === 'found' && (r.userId === currentUser.id || (Boolean(currentUser.email) && r.userEmail === currentUser.email)))
+    : [];
+  const myClaims = isAuthenticated && currentUser.id
+    ? claims.filter(c => c.claimantId === currentUser.id || (Boolean(currentUser.email) && c.claimantEmail === currentUser.email))
+    : [];
 
   return (
     <div className="space-y-6">
@@ -74,12 +80,12 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
       <div className="p-6 rounded-3xl glass-panel border border-slate-300 dark:border-[#D9A441]/30 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#30152F] via-[#481E46] to-[#D9A441] text-[#E8EDF2] font-extrabold text-xl flex items-center justify-center shadow-md">
-            {currentUser.name.charAt(0)}
+            {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'S'}
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-bold text-[#30152F] dark:text-[#E8EDF2] font-display">
-                {currentUser.name}
+                {currentUser.name || (isAuthenticated ? 'GNIOT Student' : 'Guest Student')}
               </h2>
               {currentUser.isEmailVerified ? (
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#D9A441]/15 text-[#BE8B2C] dark:text-[#D9A441] border border-[#D9A441]/30 text-[11px] font-semibold">
@@ -93,7 +99,11 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
               )}
             </div>
             <p className="text-xs text-slate-600 dark:text-[#E8EDF2]/70 mt-0.5">
-              Roll No: <span className="font-mono font-medium text-[#30152F] dark:text-[#E8EDF2]">{currentUser.rollNo}</span> • Dept: {currentUser.department} • GNIOT Greater Noida
+              {currentUser.rollNo ? (
+                <>Roll No: <span className="font-mono font-medium text-[#30152F] dark:text-[#E8EDF2]">{currentUser.rollNo}</span> • Dept: {currentUser.department} • GNIOT Greater Noida</>
+              ) : (
+                <>GNIOT Campus Recovery Network • Greater Noida</>
+              )}
             </p>
           </div>
         </div>
@@ -322,11 +332,11 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
               return (
                 <div
                   key={m.id}
-                  className="p-5 rounded-2xl glass-card border border-slate-200 dark:border-slate-800 shadow-sm space-y-3"
+                  className="p-5 rounded-2xl bg-white dark:bg-[#250D24] border border-slate-300 dark:border-[#D9A441]/25 shadow-sm space-y-3"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
+                      <span className="px-2.5 py-1 rounded-full text-xs font-extrabold bg-[#D9A441]/20 text-[#190918] dark:text-[#D9A441] border border-[#D9A441]/30">
                         {m.matchScore}% {m.confidenceLevel}
                       </span>
                       <span className="text-xs text-slate-400">ID: {m.id}</span>
@@ -334,7 +344,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                     {matchedFoundReport && (
                       <button
                         onClick={() => onSelectItem(matchedFoundReport)}
-                        className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs transition-all flex items-center gap-1"
+                        className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#D9A441] to-[#C59132] text-[#190918] font-bold text-xs shadow-sm hover:brightness-105 transition-all flex items-center gap-1"
                       >
                         Inspect Match
                         <ExternalLink className="w-3.5 h-3.5" />
@@ -342,16 +352,42 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                     )}
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-50 dark:bg-[#1E0B1D] p-3 rounded-xl border border-slate-200 dark:border-slate-800">
                     <div>
                       <span className="text-[10px] text-slate-400 uppercase font-semibold block">Your Lost Report</span>
-                      <span className="font-bold text-slate-800 dark:text-slate-200">{m.lostItemTitle}</span>
+                      <span className="font-bold text-[#30152F] dark:text-slate-200">{m.lostItemTitle}</span>
                     </div>
                     <div>
                       <span className="text-[10px] text-slate-400 uppercase font-semibold block">Potential Candidate</span>
-                      <span className="font-bold text-indigo-600 dark:text-indigo-400">{m.foundItemTitle}</span>
+                      <span className="font-bold text-[#D9A441]">{m.foundItemTitle}</span>
                     </div>
                   </div>
+
+                  {/* Multi-Factor Breakdown Chips */}
+                  {m.factors && (
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-[10px] pt-1">
+                      <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-[#280F27] border border-slate-200 dark:border-slate-800 text-center">
+                        <span className="text-slate-500 block text-[9px]">Visual:</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-200">{m.factors.visualScore}%</span>
+                      </div>
+                      <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-[#280F27] border border-slate-200 dark:border-slate-800 text-center">
+                        <span className="text-slate-500 block text-[9px]">Category:</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-200">{m.factors.categoryScore}%</span>
+                      </div>
+                      <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-[#280F27] border border-slate-200 dark:border-slate-800 text-center">
+                        <span className="text-slate-500 block text-[9px]">Location:</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-200">{m.factors.locationScore}%</span>
+                      </div>
+                      <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-[#280F27] border border-slate-200 dark:border-slate-800 text-center">
+                        <span className="text-slate-500 block text-[9px]">Date:</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-200">{m.factors.dateScore}%</span>
+                      </div>
+                      <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-[#280F27] border border-slate-200 dark:border-slate-800 text-center">
+                        <span className="text-slate-500 block text-[9px]">Description:</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-200">{m.factors.semanticScore}%</span>
+                      </div>
+                    </div>
+                  )}
 
                   <div>
                     <span className="text-[11px] font-semibold text-slate-500 block mb-1">AI Correlation Reasons:</span>
@@ -368,50 +404,63 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
         </div>
       )}
 
-      {/* Tab 3: My Claims */}
+      {/* Tab 3: My Claims (8-State Tracking) */}
       {activeTab === 'claims' && (
         <div className="space-y-3">
           {myClaims.length > 0 ? (
             myClaims.map(c => (
               <div
                 key={c.id}
-                className="p-5 rounded-2xl glass-card border border-slate-200 dark:border-slate-800 shadow-sm space-y-2"
+                className="p-5 rounded-2xl bg-white dark:bg-[#250D24] border border-slate-300 dark:border-[#D9A441]/25 shadow-sm space-y-3"
               >
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <span className="font-mono text-xs font-bold text-slate-400 block">{c.id}</span>
-                    <h4 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
+                    <h4 className="font-bold text-sm sm:text-base text-[#30152F] dark:text-white">
                       Claim for: {c.itemTitle}
                     </h4>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                    c.status === 'Resolved' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' :
-                    c.status === 'Approved' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300' :
-                    c.status === 'Rejected' ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300' :
+                  <span className={`self-start sm:self-center px-3 py-1 rounded-full text-xs font-bold ${
+                    c.status === 'handed_over' || c.status === 'closed' || c.status === 'Resolved' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300' :
+                    c.status === 'approved' || c.status === 'Approved' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300' :
+                    c.status === 'additional_evidence_requested' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300' :
+                    c.status === 'rejected' || c.status === 'Rejected' ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300' :
                     'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300'
                   }`}>
                     {c.status}
                   </span>
                 </div>
 
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-xs space-y-1 text-slate-600 dark:text-slate-300">
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#1E0B1D] text-xs space-y-1.5 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800">
                   <div><strong>Secret Clue Submitted:</strong> {c.distinctiveMarkAnswer}</div>
                   {c.adminNotes && (
-                    <div className="text-indigo-600 dark:text-indigo-400">
-                      <strong>Desk Notes:</strong> {c.adminNotes}
+                    <div className="text-[#D9A441] font-semibold">
+                      <strong>Campus Custodian Note:</strong> {c.adminNotes}
+                    </div>
+                  )}
+                  {c.handoverReceiptId && (
+                    <div className="text-emerald-600 dark:text-emerald-400 font-mono font-bold">
+                      Digital Handover Receipt: {c.handoverReceiptId}
                     </div>
                   )}
                   <div className="text-[11px] text-slate-400">Filed on: {new Date(c.createdAt).toLocaleDateString()}</div>
                 </div>
+
+                {c.status === 'approved' && (
+                  <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-800 dark:text-emerald-200 flex items-center justify-between">
+                    <span>✓ Claim Approved! Visit the campus security cell with your College ID to collect your item.</span>
+                  </div>
+                )}
               </div>
             ))
           ) : (
-            <div className="p-8 text-center rounded-2xl glass-panel text-slate-500 text-xs">
+            <div className="p-8 text-center rounded-2xl bg-white dark:bg-[#250D24] border border-slate-300 dark:border-[#D9A441]/25 text-slate-500 text-xs">
               You haven&apos;t filed any claims yet. When you spot an item in the registry, click &quot;Claim / Verify Ownership&quot;.
             </div>
           )}
         </div>
       )}
+
 
       {/* Tab 4: Notifications */}
       {activeTab === 'notifications' && (

@@ -27,7 +27,10 @@ import {
   AlertCircle,
   LogIn,
   LogOut,
-  UserCheck
+  UserCheck,
+  Menu,
+  X,
+  Home
 } from 'lucide-react';
 import { 
   ReportItem, 
@@ -49,6 +52,7 @@ import { SearchPage } from './components/SearchPage';
 import { StudentDashboard } from './components/StudentDashboard';
 import { AdminPortal } from './components/AdminPortal';
 import { AuthModal } from './components/AuthModal';
+import { LoginPage } from './components/LoginPage';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { testSupabaseConnection } from './lib/supabase';
 import { INITIAL_CAMPUS_LOCATIONS } from './data/campusData';
@@ -66,6 +70,7 @@ function MainApp() {
 
   // Navigation tab
   const [currentNav, setCurrentNav] = useState<'home' | 'search' | 'dashboard' | 'admin'>('home');
+  const [guestBrowseMode, setGuestBrowseMode] = useState<boolean>(false);
 
   // Database / state
   const [reports, setReports] = useState<ReportItem[]>([]);
@@ -83,11 +88,12 @@ function MainApp() {
   });
 
   // Supabase Auth & Session
-  const { user, profile, isAuthenticated, isAdmin: isUserAdmin, signOut, isConfigured } = useAuth();
+  const { user, profile, isAuthenticated, isAdmin: isUserAdmin, signOut, loading: authLoading, isConfigured } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup' | 'forgot'>('signin');
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dbStatus, setDbStatus] = useState<{ connected: boolean; message: string; tableCount?: number } | null>(null);
 
   // Sync admin state with auth profile role
@@ -102,13 +108,13 @@ function MainApp() {
     testSupabaseConnection().then(res => setDbStatus(res));
   }, []);
 
-  // Compute active user profile for modals and components
+  // Compute active user profile strictly from authenticated session
   const currentUser = {
-    id: user?.id || 'guest-user',
-    name: profile?.name || profile?.fullName || user?.user_metadata?.full_name || (isAuthenticated ? 'GNIOT Student' : 'Ayush Jaiswal'),
-    email: user?.email || (isAuthenticated ? 'student@gniot.net.in' : 'ayushjaiswal272008@gmail.com'),
-    rollNo: profile?.rollNo || '240133010001',
-    department: profile?.department || 'Computer Science & Engineering',
+    id: user?.id || (isAuthenticated ? 'usr-student' : ''),
+    name: profile?.name || profile?.fullName || user?.user_metadata?.full_name || (isAuthenticated ? 'GNIOT Student' : ''),
+    email: user?.email || (isAuthenticated ? 'student@gniot.net.in' : ''),
+    rollNo: profile?.rollNo || user?.user_metadata?.roll_no || '',
+    department: profile?.department || user?.user_metadata?.department || 'Computer Science & Engineering',
     isEmailVerified: Boolean(user?.email_confirmed_at || profile?.isEmailVerified)
   };
 
@@ -218,13 +224,100 @@ function MainApp() {
     }
   };
 
+  // Auth & Action Route Guards
+  const handleOpenLostModal = () => {
+    if (!isAuthenticated) {
+      setAuthModalMode('signin');
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setIsLostModalOpen(true);
+  };
+
+  const handleOpenFoundModal = () => {
+    if (!isAuthenticated) {
+      setAuthModalMode('signin');
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setIsFoundModalOpen(true);
+  };
+
+  const handleOpenClaimModal = (report: ReportItem) => {
+    if (!isAuthenticated) {
+      setAuthModalMode('signin');
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setClaimTargetReport(report);
+  };
+
+  const handleNavClick = (tab: 'home' | 'search' | 'dashboard' | 'admin') => {
+    if (tab === 'dashboard' && !isAuthenticated) {
+      setAuthModalMode('signin');
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setCurrentNav(tab);
+    setMobileMenuOpen(false);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    setGuestBrowseMode(false);
+    setUserDropdownOpen(false);
+    setCurrentNav('home');
+  };
+
   // Sliced reports for Home Page showcases
   const recentLost = reports.filter(r => r.type === 'lost' && r.status !== 'Resolved').slice(0, 4);
   const recentFound = reports.filter(r => r.type === 'found' && r.status !== 'Resolved').slice(0, 4);
   const recentlyReunited = reports.filter(r => r.status === 'Resolved').slice(0, 3);
 
+  // 1. Loading Splash Screen while checking Supabase session
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#190918] flex flex-col items-center justify-center p-6 text-center selection:bg-[#D9A441] selection:text-[#30152F]">
+        <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-[#D9A441] via-[#E5B558] to-[#30152F] p-0.5 shadow-2xl shadow-[#D9A441]/25 animate-pulse mb-4">
+          <div className="w-full h-full bg-[#30152F] rounded-[22px] flex items-center justify-center text-[#D9A441] font-extrabold text-2xl font-display">
+            G
+          </div>
+        </div>
+        <h1 className="text-xl font-bold font-display text-white">GNIOT AI Lost &amp; Found</h1>
+        <p className="text-xs text-[#E8EDF2]/70 mt-1">Initializing secure session...</p>
+      </div>
+    );
+  }
+
+  // 2. Unauthenticated Gate: Show Login / Sign Up Page First
+  if (!isAuthenticated && !guestBrowseMode) {
+    return (
+      <LoginPage
+        onGuestContinue={() => setGuestBrowseMode(true)}
+        onLoginSuccess={() => setGuestBrowseMode(false)}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#190918] text-[#E8EDF2] transition-colors duration-300 font-sans selection:bg-[#D9A441] selection:text-[#30152F]">
+      {/* Guest Mode Notice Bar */}
+      {!isAuthenticated && guestBrowseMode && (
+        <div className="bg-[#240E23] border-b border-[#D9A441]/25 px-4 py-2 text-center text-xs flex flex-wrap items-center justify-center gap-2 text-[#E8EDF2]">
+          <span className="text-[#E8EDF2]/80">Browsing in Public Guest Mode.</span>
+          <button
+            onClick={() => {
+              setAuthModalMode('signin');
+              setIsAuthModalOpen(true);
+            }}
+            className="text-[#D9A441] font-bold underline hover:brightness-110 cursor-pointer"
+          >
+            Sign In / Create Account
+          </button>
+          <span className="text-[#E8EDF2]/70">to submit lost/found reports, file claims &amp; track items.</span>
+        </div>
+      )}
+
       {/* Top Futuristic Header Navigation */}
       <header className="sticky top-0 z-40 w-full glass-panel border-b border-[#D9A441]/20 bg-[#30152F]/95 backdrop-blur-md transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between gap-4">
@@ -277,7 +370,7 @@ function MainApp() {
           {/* Navigation Links */}
           <nav className="hidden md:flex items-center gap-1 p-1 rounded-2xl bg-[#240E23] border border-[#D9A441]/20 text-xs font-semibold">
             <button
-              onClick={() => setCurrentNav('home')}
+              onClick={() => handleNavClick('home')}
               className={`px-3.5 py-2 rounded-xl transition-all ${
                 currentNav === 'home'
                   ? 'bg-[#30152F] text-[#D9A441] shadow-sm font-bold border border-[#D9A441]/30'
@@ -287,7 +380,7 @@ function MainApp() {
               Home
             </button>
             <button
-              onClick={() => setCurrentNav('search')}
+              onClick={() => handleNavClick('search')}
               className={`px-3.5 py-2 rounded-xl transition-all ${
                 currentNav === 'search'
                   ? 'bg-[#30152F] text-[#D9A441] shadow-sm font-bold border border-[#D9A441]/30'
@@ -297,7 +390,7 @@ function MainApp() {
               Campus Registry
             </button>
             <button
-              onClick={() => setCurrentNav('dashboard')}
+              onClick={() => handleNavClick('dashboard')}
               className={`px-3.5 py-2 rounded-xl transition-all ${
                 currentNav === 'dashboard'
                   ? 'bg-[#30152F] text-[#D9A441] shadow-sm font-bold border border-[#D9A441]/30'
@@ -307,7 +400,7 @@ function MainApp() {
               Student Dashboard
             </button>
             <button
-              onClick={() => setCurrentNav('admin')}
+              onClick={() => handleNavClick('admin')}
               className={`px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 ${
                 currentNav === 'admin'
                   ? 'bg-[#30152F] text-[#D9A441] shadow-sm font-bold border border-[#D9A441]/30'
@@ -320,7 +413,7 @@ function MainApp() {
           </nav>
 
           {/* Quick Actions & Theme Switcher */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3">
             <button
               onClick={() => setIsVisualSearchOpen(true)}
               title="AI Visual Photo Search"
@@ -335,7 +428,7 @@ function MainApp() {
               <div className="relative">
                 <button
                   onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                  className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-[#2B112A] hover:bg-[#391738] border border-[#D9A441]/30 transition-all text-xs font-semibold shadow-xs"
+                  className="flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-[#2B112A] hover:bg-[#391738] border border-[#D9A441]/30 transition-all text-xs font-semibold shadow-xs"
                 >
                   <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-[#30152F] to-[#D9A441] text-[#E8EDF2] font-bold flex items-center justify-center text-[11px] shadow-xs">
                     {currentUser.name.charAt(0)}
@@ -357,21 +450,18 @@ function MainApp() {
 
                     <button
                       onClick={() => {
-                        setCurrentNav('dashboard');
+                        handleNavClick('dashboard');
                         setUserDropdownOpen(false);
                       }}
-                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold hover:bg-[#240E23] text-[#E8EDF2] flex items-center gap-2"
+                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold hover:bg-[#240E23] text-[#E8EDF2] flex items-center gap-2 cursor-pointer"
                     >
                       <User className="w-4 h-4 text-[#D9A441]" />
                       My Dashboard
                     </button>
 
                     <button
-                      onClick={async () => {
-                        await signOut();
-                        setUserDropdownOpen(false);
-                      }}
-                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-red-400 hover:bg-red-500/10 flex items-center gap-2 transition-colors"
+                      onClick={handleSignOut}
+                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-red-400 hover:bg-red-500/10 flex items-center gap-2 transition-colors cursor-pointer"
                     >
                       <LogOut className="w-4 h-4" />
                       Sign Out
@@ -386,7 +476,7 @@ function MainApp() {
                     setAuthModalMode('signin');
                     setIsAuthModalOpen(true);
                   }}
-                  className="px-3 py-2 rounded-xl text-xs font-bold text-[#E8EDF2] hover:text-[#D9A441] transition-colors"
+                  className="px-2.5 sm:px-3 py-2 rounded-xl text-xs font-bold text-[#E8EDF2] hover:text-[#D9A441] transition-colors"
                 >
                   Sign In
                 </button>
@@ -406,19 +496,92 @@ function MainApp() {
               onClick={() => setIsDarkMode(!isDarkMode)}
               aria-label="Toggle Theme Mode"
               title="Signature Gold & Deep Aubergine Theme"
-              className="p-2.5 rounded-xl border border-[#D9A441]/25 bg-[#30152F] text-[#D9A441] hover:bg-[#3D1A3C] transition-colors shadow-xs"
+              className="p-2 sm:p-2.5 rounded-xl border border-[#D9A441]/25 bg-[#30152F] text-[#D9A441] hover:bg-[#3D1A3C] transition-colors shadow-xs"
             >
               <Sun className="w-4 h-4 text-[#D9A441]" />
             </button>
+
+            {/* Mobile Hamburger Menu Toggle */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle Mobile Navigation"
+              className="p-2 md:hidden rounded-xl border border-[#D9A441]/30 bg-[#240E23] text-[#D9A441] hover:bg-[#30152F] active:scale-95 transition-all shadow-xs"
+            >
+              {mobileMenuOpen ? <X className="w-4 h-4 text-[#D9A441]" /> : <Menu className="w-4 h-4 text-[#D9A441]" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Slide-Down Navigation Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-[#D9A441]/20 bg-[#240E23]/98 backdrop-blur-xl px-4 py-3 space-y-2.5 animate-in slide-in-from-top-2 duration-200 shadow-2xl">
+            <div className="grid grid-cols-2 gap-2 text-xs font-semibold">
+              <button
+                onClick={() => handleNavClick('home')}
+                className={`flex items-center gap-2 p-2.5 rounded-xl border transition-all ${
+                  currentNav === 'home'
+                    ? 'bg-[#30152F] text-[#D9A441] border-[#D9A441]/50 font-bold shadow-sm'
+                    : 'bg-[#190918]/60 text-[#E8EDF2]/90 border-white/5 hover:border-[#D9A441]/20'
+                }`}
+              >
+                <Home className="w-4 h-4 text-[#D9A441]" />
+                <span>Home</span>
+              </button>
+
+              <button
+                onClick={() => handleNavClick('search')}
+                className={`flex items-center gap-2 p-2.5 rounded-xl border transition-all ${
+                  currentNav === 'search'
+                    ? 'bg-[#30152F] text-[#D9A441] border-[#D9A441]/50 font-bold shadow-sm'
+                    : 'bg-[#190918]/60 text-[#E8EDF2]/90 border-white/5 hover:border-[#D9A441]/20'
+                }`}
+              >
+                <Compass className="w-4 h-4 text-[#D9A441]" />
+                <span>Campus Registry</span>
+              </button>
+
+              <button
+                onClick={() => handleNavClick('dashboard')}
+                className={`flex items-center gap-2 p-2.5 rounded-xl border transition-all ${
+                  currentNav === 'dashboard'
+                    ? 'bg-[#30152F] text-[#D9A441] border-[#D9A441]/50 font-bold shadow-sm'
+                    : 'bg-[#190918]/60 text-[#E8EDF2]/90 border-white/5 hover:border-[#D9A441]/20'
+                }`}
+              >
+                <User className="w-4 h-4 text-[#D9A441]" />
+                <span>Student Dashboard</span>
+              </button>
+
+              <button
+                onClick={() => handleNavClick('admin')}
+                className={`flex items-center gap-2 p-2.5 rounded-xl border transition-all ${
+                  currentNav === 'admin'
+                    ? 'bg-[#30152F] text-[#D9A441] border-[#D9A441]/50 font-bold shadow-sm'
+                    : 'bg-[#190918]/60 text-[#E8EDF2]/90 border-white/5 hover:border-[#D9A441]/20'
+                }`}
+              >
+                <Lock className="w-4 h-4 text-[#D9A441]" />
+                <span>Admin Portal</span>
+              </button>
+            </div>
+
+            {/* Vision Search Full Button inside Mobile Menu */}
+            <button
+              onClick={() => { setIsVisualSearchOpen(true); setMobileMenuOpen(false); }}
+              className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl bg-gradient-to-r from-[#D9A441] to-[#C59132] text-[#190918] font-bold text-xs shadow-md active:scale-98 transition-all"
+            >
+              <Camera className="w-4 h-4" />
+              <span>AI Vision Search (Camera &amp; Photo Matching)</span>
+            </button>
+          </div>
+        )}
       </header>
 
       {/* Offline Mode Indicator */}
       <OfflineIndicator />
 
       {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-12">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-8 space-y-12">
         {/* VIEW 1: HOME PAGE */}
         {currentNav === 'home' && (
           <div className="space-y-12 animate-in fade-in duration-300">
@@ -426,10 +589,10 @@ function MainApp() {
             <Campus3DHero
               isDarkMode={isDarkMode}
               onQuickReport={type => {
-                if (type === 'lost') setIsLostModalOpen(true);
-                else setIsFoundModalOpen(true);
+                if (type === 'lost') handleOpenLostModal();
+                else handleOpenFoundModal();
               }}
-              onExploreSearch={() => setCurrentNav('search')}
+              onExploreSearch={() => handleNavClick('search')}
             />
 
             {/* Global AI Search Bar */}
@@ -642,8 +805,8 @@ function MainApp() {
                     Found an ID card, wallet, keys, or device? Help a fellow student by turning it in.
                   </p>
                   <button
-                    onClick={() => setIsFoundModalOpen(true)}
-                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md transition-all inline-flex items-center gap-1.5"
+                    onClick={handleOpenFoundModal}
+                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md transition-all inline-flex items-center gap-1.5 cursor-pointer"
                   >
                     + Report Found Item
                   </button>
@@ -818,8 +981,8 @@ function MainApp() {
               onSelectItem={item => setSelectedReport(item)}
               onOpenVisualSearch={() => setIsVisualSearchOpen(true)}
               onOpenReport={type => {
-                if (type === 'lost') setIsLostModalOpen(true);
-                else setIsFoundModalOpen(true);
+                if (type === 'lost') handleOpenLostModal();
+                else handleOpenFoundModal();
               }}
             />
           </div>
@@ -837,8 +1000,8 @@ function MainApp() {
               onSelectItem={item => setSelectedReport(item)}
               onMarkNotificationRead={handleMarkNotifRead}
               onOpenReport={type => {
-                if (type === 'lost') setIsLostModalOpen(true);
-                else setIsFoundModalOpen(true);
+                if (type === 'lost') handleOpenLostModal();
+                else handleOpenFoundModal();
               }}
               onDeleteReport={handleDeleteReport}
               isAuthenticated={isAuthenticated}
@@ -872,8 +1035,8 @@ function MainApp() {
       {/* Floating AI Campus Assistant (AURA) */}
       <AIAssistantChat
         onOpenReport={type => {
-          if (type === 'lost') setIsLostModalOpen(true);
-          else setIsFoundModalOpen(true);
+          if (type === 'lost') handleOpenLostModal();
+          else handleOpenFoundModal();
         }}
         onSearchQuery={q => {
           setQuickSearchInput(q);
@@ -910,9 +1073,9 @@ function MainApp() {
         onClose={() => setSelectedReport(null)}
         report={selectedReport}
         matches={matches.filter(m => selectedReport && (m.lostReportId === selectedReport.id || m.foundReportId === selectedReport.id))}
-        onOpenClaim={report => setClaimTargetReport(report)}
+        onOpenClaim={report => handleOpenClaimModal(report)}
         onStatusChange={handleUpdateReportStatus}
-        isOwnerOrAdmin={isAdmin || (selectedReport?.userId === currentUser.id)}
+        isOwnerOrAdmin={isAdmin || (isAuthenticated && Boolean(currentUser.id) && selectedReport?.userId === currentUser.id)}
       />
 
       <ClaimModal
@@ -996,6 +1159,74 @@ function MainApp() {
           </div>
         </div>
       </footer>
+
+      {/* Mobile Fixed Bottom Navigation Bar (Visible on all mobile phones & apps) */}
+      <nav 
+        aria-label="Mobile Bottom Navigation"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#250E24]/95 backdrop-blur-xl border-t border-[#D9A441]/30 py-1.5 px-3 flex items-center justify-around shadow-2xl safe-area-pb"
+      >
+        <button
+          onClick={() => setCurrentNav('home')}
+          className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all ${
+            currentNav === 'home'
+              ? 'text-[#D9A441] font-bold scale-105'
+              : 'text-[#E8EDF2]/70 hover:text-[#E8EDF2]'
+          }`}
+        >
+          <Home className={`w-5 h-5 ${currentNav === 'home' ? 'text-[#D9A441]' : ''}`} />
+          <span className="text-[10px] mt-0.5 tracking-tight">Home</span>
+        </button>
+
+        <button
+          onClick={() => setCurrentNav('search')}
+          className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all ${
+            currentNav === 'search'
+              ? 'text-[#D9A441] font-bold scale-105'
+              : 'text-[#E8EDF2]/70 hover:text-[#E8EDF2]'
+          }`}
+        >
+          <Compass className={`w-5 h-5 ${currentNav === 'search' ? 'text-[#D9A441]' : ''}`} />
+          <span className="text-[10px] mt-0.5 tracking-tight">Registry</span>
+        </button>
+
+        {/* Center Prominent Vision AI Search Button */}
+        <button
+          onClick={() => setIsVisualSearchOpen(true)}
+          title="AI Vision Search (Camera)"
+          className="flex flex-col items-center justify-center -mt-5 group"
+        >
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#D9A441] via-[#F2C770] to-[#BE8B2C] p-0.5 shadow-lg shadow-[#D9A441]/35 group-hover:scale-105 active:scale-95 transition-all">
+            <div className="w-full h-full bg-[#190918] rounded-[14px] flex items-center justify-center text-[#D9A441]">
+              <Camera className="w-5 h-5 text-[#D9A441]" />
+            </div>
+          </div>
+          <span className="text-[10px] font-bold text-[#D9A441] mt-0.5">Vision AI</span>
+        </button>
+
+        <button
+          onClick={() => setCurrentNav('dashboard')}
+          className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all ${
+            currentNav === 'dashboard'
+              ? 'text-[#D9A441] font-bold scale-105'
+              : 'text-[#E8EDF2]/70 hover:text-[#E8EDF2]'
+          }`}
+        >
+          <User className={`w-5 h-5 ${currentNav === 'dashboard' ? 'text-[#D9A441]' : ''}`} />
+          <span className="text-[10px] mt-0.5 tracking-tight">Dashboard</span>
+        </button>
+
+        <button
+          onClick={() => setCurrentNav('admin')}
+          className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all ${
+            currentNav === 'admin'
+              ? 'text-[#D9A441] font-bold scale-105'
+              : 'text-[#E8EDF2]/70 hover:text-[#E8EDF2]'
+          }`}
+        >
+          <Lock className={`w-5 h-5 ${currentNav === 'admin' ? 'text-[#D9A441]' : ''}`} />
+          <span className="text-[10px] mt-0.5 tracking-tight">Admin</span>
+        </button>
+      </nav>
     </div>
   );
 }

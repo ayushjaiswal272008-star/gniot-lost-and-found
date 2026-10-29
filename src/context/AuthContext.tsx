@@ -22,7 +22,6 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error?: string; message?: string }>;
   resendVerificationEmail: (email: string) => Promise<{ error?: string; message?: string }>;
-  bypassEmailVerification: (email: string, studentName?: string) => Promise<{ success: boolean }>;
   refreshProfile: () => Promise<void>;
 }
 
@@ -34,14 +33,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Fetch or construct profile
+  // Fetch or construct profile from Supabase profiles table
   const fetchProfile = async (currentUser: User) => {
     if (!supabase || !isSupabaseConfigured) {
       setProfile({
         id: currentUser.id,
-        name: currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'GNIOT Student',
+        name: currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Campus Student',
         email: currentUser.email || '',
-        rollNo: currentUser.user_metadata?.roll_no || '240133010001',
+        rollNo: currentUser.user_metadata?.roll_no || '',
         role: currentUser.user_metadata?.role || 'student',
         department: currentUser.user_metadata?.department || 'Computer Science & Engineering',
         isEmailVerified: Boolean(currentUser.email_confirmed_at),
@@ -55,12 +54,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .from('profiles')
         .select('*')
         .eq('id', currentUser.id)
-        .single();
+        .maybeSingle();
 
       if (!error && data) {
         setProfile({
           id: data.id,
-          name: data.full_name || currentUser.user_metadata?.full_name || 'GNIOT Student',
+          name: data.full_name || currentUser.user_metadata?.full_name || 'Campus Student',
           email: data.college_email || currentUser.email || '',
           rollNo: data.roll_no || currentUser.user_metadata?.roll_no || '',
           role: data.role || 'student',
@@ -69,101 +68,93 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           avatarUrl: data.avatar_url,
         });
       } else {
-        // Fallback to metadata
-        setProfile({
+        // Fallback to auth user metadata
+        const metadataProfile: UserProfile = {
           id: currentUser.id,
-          name: currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'GNIOT Student',
+          name: currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Campus Student',
           email: currentUser.email || '',
           rollNo: currentUser.user_metadata?.roll_no || '',
           role: (currentUser.user_metadata?.role as any) || 'student',
           department: currentUser.user_metadata?.department || 'Computer Science & Engineering',
           isEmailVerified: Boolean(currentUser.email_confirmed_at),
           avatarUrl: currentUser.user_metadata?.avatar_url,
-        });
+        };
+        setProfile(metadataProfile);
+
+        // If profile row doesn't exist yet, insert it safely into profiles table
+        if (!data) {
+          try {
+            await supabase.from('profiles').insert([{
+              id: currentUser.id,
+              full_name: metadataProfile.name,
+              college_email: metadataProfile.email,
+              roll_no: metadataProfile.rollNo || '',
+              department: metadataProfile.department,
+              role: metadataProfile.role,
+              updated_at: new Date().toISOString()
+            }]);
+          } catch (insertErr) {
+            console.warn('Initial profile sync warning:', insertErr);
+          }
+        }
       }
     } catch (err) {
       console.warn('Profile fetch warning:', err);
     }
   };
 
-  // Direct login bypass for unverified emails or instant access
-  const bypassEmailVerification = async (unverifiedEmail: string, studentName?: string): Promise<{ success: boolean }> => {
-    const isAyush = unverifiedEmail.toLowerCase().includes('ayush');
-    const fallbackUser: any = {
-      id: isAyush ? 'usr-ayush-272008' : `usr-${Date.now()}`,
-      email: unverifiedEmail.trim(),
-      email_confirmed_at: new Date().toISOString(),
-      user_metadata: {
-        full_name: studentName?.trim() || (isAyush ? 'Ayush Jaiswal' : unverifiedEmail.split('@')[0]),
-        roll_no: '240133010001',
-        department: 'Computer Science & Engineering',
-        role: 'student'
-      }
-    };
-    setUser(fallbackUser);
-    setProfile({
-      id: fallbackUser.id,
-      name: fallbackUser.user_metadata.full_name,
-      email: unverifiedEmail.trim(),
-      rollNo: '240133010001',
-      role: 'student',
-      department: 'Computer Science & Engineering',
-      isEmailVerified: true
-    });
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('gniot_custom_auth_session', JSON.stringify(fallbackUser));
-    }
-    return { success: true };
-  };
-
   useEffect(() => {
+    let isMounted = true;
+
     if (!isSupabaseConfigured || !supabase) {
+      setUser(null);
+      setSession(null);
+      setProfile(null);
       setLoading(false);
       return;
     }
 
-    let isMounted = true;
-
-    // 1. Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // 1. Get initial session from Supabase client
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (!isMounted) return;
+
+      if (error) {
+        console.warn('Supabase getSession warning:', error.message);
+        setUser(null);
+        setSession(null);
+        setProfile(null);
+        setLoading(false);
+        return;
+      }
+
       setSession(session);
       setUser(session?.user ?? null);
+
       if (session?.user) {
         fetchProfile(session.user).finally(() => {
           if (isMounted) setLoading(false);
         });
       } else {
-        // Fallback for custom or direct confirmed session
-        const saved = typeof window !== 'undefined' ? localStorage.getItem('gniot_custom_auth_session') : null;
-        if (saved) {
-          try {
-            const parsed = JSON.parse(saved);
-            setUser(parsed);
-            fetchProfile(parsed);
-          } catch {
-            localStorage.removeItem('gniot_custom_auth_session');
-            bypassEmailVerification('ayushjaiswal272008@gmail.com', 'Ayush Jaiswal');
-          }
-        } else {
-          // Auto-activate verified student session for Ayush Jaiswal
-          bypassEmailVerification('ayushjaiswal272008@gmail.com', 'Ayush Jaiswal');
-        }
+        // Unauthenticated visitor: keep state completely clean
+        setProfile(null);
         setLoading(false);
       }
     }).catch(err => {
-      console.warn('Get session error:', err);
+      console.warn('Initial auth session error:', err);
       if (isMounted) {
-        bypassEmailVerification('ayushjaiswal272008@gmail.com', 'Ayush Jaiswal');
+        setUser(null);
+        setSession(null);
+        setProfile(null);
         setLoading(false);
       }
     });
 
-    // 2. Listen to auth state transitions
+    // 2. Listen to real-time auth state transitions (sign in, sign out, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
       if (!isMounted) return;
       setSession(newSession);
       setUser(newSession?.user ?? null);
+
       if (newSession?.user) {
         await fetchProfile(newSession.user);
       } else {
@@ -184,7 +175,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Sign Up
+  // Real Supabase Sign Up
   const signUp = async ({
     email,
     password,
@@ -199,31 +190,79 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     department?: string;
   }): Promise<{ error?: string; requiresEmailVerification?: boolean }> => {
     if (!isSupabaseConfigured || !supabase) {
-      return { error: 'Supabase configuration missing. Please configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.' };
+      return { error: 'Supabase configuration is missing. Please ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set.' };
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanName = fullName.trim();
+    const cleanRollNo = rollNo?.trim() || '';
+    const cleanDept = department?.trim() || 'Computer Science & Engineering';
+
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      return { error: 'Please enter a valid email address.' };
+    }
+    if (!password || password.length < 6) {
+      return { error: 'Password must contain at least 6 characters.' };
+    }
+    if (!cleanName) {
+      return { error: 'Please enter your full name.' };
     }
 
     try {
+      const redirectUrl = typeof window !== 'undefined'
+        ? `${window.location.origin}/gniot-lost-and-found/`
+        : undefined;
+
       const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
+        email: cleanEmail,
         password,
         options: {
+          emailRedirectTo: redirectUrl,
           data: {
-            full_name: fullName.trim(),
-            roll_no: rollNo?.trim() || '',
-            department: department || 'Computer Science & Engineering',
+            full_name: cleanName,
+            roll_no: cleanRollNo,
+            department: cleanDept,
             role: 'student',
           },
         },
       });
 
       if (error) {
+        const msg = error.message.toLowerCase();
+        if (msg.includes('already registered') || msg.includes('user already exists')) {
+          return { error: 'An account with this email already exists. Please Sign In instead.' };
+        }
+        if (msg.includes('password') && msg.includes('weak')) {
+          return { error: 'Password is too weak. Please choose a password with at least 6 characters.' };
+        }
         return { error: error.message };
       }
 
-      // Check if email confirmation is required - auto activate!
-      if (data.user && !data.session) {
-        await bypassEmailVerification(email, fullName);
-        return {};
+      if (data.user) {
+        // Attempt to sync to profiles table
+        try {
+          await supabase.from('profiles').upsert([{
+            id: data.user.id,
+            full_name: cleanName,
+            college_email: cleanEmail,
+            roll_no: cleanRollNo,
+            department: cleanDept,
+            role: 'student',
+            updated_at: new Date().toISOString(),
+          }], { onConflict: 'id' });
+        } catch (profileErr) {
+          console.warn('Profile sync on sign up:', profileErr);
+        }
+
+        // Check if session exists (auto-confirmed) or email confirmation is required
+        if (data.session) {
+          setSession(data.session);
+          setUser(data.user);
+          await fetchProfile(data.user);
+          return { requiresEmailVerification: false };
+        } else {
+          return { requiresEmailVerification: true };
+        }
       }
 
       return {};
@@ -232,44 +271,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Sign In
+  // Real Supabase Sign In with Password
   const signIn = async (email: string, password: string): Promise<{ error?: string }> => {
     if (!isSupabaseConfigured || !supabase) {
-      return { error: 'Supabase configuration missing. Please configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.' };
+      return { error: 'Supabase configuration is missing. Please ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set.' };
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      return { error: 'Please enter a valid email address.' };
+    }
+    if (!password) {
+      return { error: 'Please enter your password.' };
     }
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
         password,
       });
 
       if (error) {
-        // Automatically bypass if email confirmation is holding up the login!
-        if (error.message.toLowerCase().includes('email not confirmed')) {
-          await bypassEmailVerification(email);
-          return {};
+        const msg = error.message.toLowerCase();
+        if (msg.includes('invalid login credentials') || msg.includes('invalid credentials')) {
+          return { error: 'Invalid email or password. Please verify your credentials or create an account.' };
+        }
+        if (msg.includes('email not confirmed') || msg.includes('not verified')) {
+          return { error: 'Your email address has not been confirmed yet. Please check your email inbox for the Supabase confirmation link.' };
         }
         return { error: error.message };
       }
 
+      if (data?.session && data?.user) {
+        setSession(data.session);
+        setUser(data.user);
+        await fetchProfile(data.user);
+      }
+
       return {};
     } catch (err: any) {
-      if (err?.message?.toLowerCase().includes('email not confirmed')) {
-        await bypassEmailVerification(email);
-        return {};
-      }
       return { error: err.message || 'An unexpected error occurred during sign in.' };
     }
   };
 
-  // Sign Out
+  // Real Supabase Sign Out: clears Supabase session and local React state
   const signOut = async () => {
     if (supabase && isSupabaseConfigured) {
       try {
         await supabase.auth.signOut();
       } catch (err) {
-        console.warn('Sign out error:', err);
+        console.warn('Sign out warning:', err);
       }
     }
     if (typeof window !== 'undefined') {
@@ -280,10 +331,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setProfile(null);
   };
 
-  // Reset Password
+  // Supabase Password Reset
   const resetPassword = async (email: string): Promise<{ error?: string; message?: string }> => {
     if (!isSupabaseConfigured || !supabase) {
-      return { error: 'Supabase configuration missing. Please configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.' };
+      return { error: 'Supabase configuration missing.' };
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      return { error: 'Please enter a valid email address.' };
     }
 
     try {
@@ -291,7 +347,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ? `${window.location.origin}/gniot-lost-and-found/`
         : undefined;
 
-      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
         redirectTo: redirectUrl,
       });
 
@@ -299,16 +355,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error: error.message };
       }
 
-      return { message: 'Password reset link has been dispatched to your email address.' };
+      return { message: 'Password reset link has been dispatched to your email address. Please check your inbox.' };
     } catch (err: any) {
       return { error: err.message || 'Failed to dispatch password reset email.' };
     }
   };
 
-  // Resend Verification Email
+  // Resend Email Verification
   const resendVerificationEmail = async (emailToVerify: string): Promise<{ error?: string; message?: string }> => {
     if (!isSupabaseConfigured || !supabase) {
-      return { error: 'Supabase is not configured' };
+      return { error: 'Supabase is not configured.' };
+    }
+
+    const cleanEmail = emailToVerify.trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      return { error: 'Please enter a valid email address.' };
     }
 
     try {
@@ -318,7 +379,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const { error } = await supabase.auth.resend({
         type: 'signup',
-        email: emailToVerify.trim(),
+        email: cleanEmail,
         options: {
           emailRedirectTo: redirectUrl,
         },
@@ -351,7 +412,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signOut,
     resetPassword,
     resendVerificationEmail,
-    bypassEmailVerification,
     refreshProfile,
   }), [user, profile, session, loading, isAdmin]);
 

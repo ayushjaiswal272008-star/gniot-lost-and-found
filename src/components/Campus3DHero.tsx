@@ -499,27 +499,27 @@ export const Campus3DHero: React.FC<Campus3DHeroProps> = ({
         </h1>
 
         {/* Primary Action Buttons */}
-        <div className="mt-6 sm:mt-8 flex flex-wrap items-center justify-center gap-3 sm:gap-4 pointer-events-auto">
+        <div className="mt-4 sm:mt-8 flex flex-wrap items-center justify-center gap-2 sm:gap-4 pointer-events-auto">
           <button
             onClick={() => onQuickReport && onQuickReport('lost')}
-            className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-[#D9A441] via-[#E4C56D] to-[#BE8B2C] hover:brightness-105 text-[#190918] font-bold text-sm sm:text-base shadow-lg shadow-[#D9A441]/30 hover:shadow-[#D9A441]/45 transform hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2"
+            className="px-4 sm:px-6 py-2.5 sm:py-3.5 rounded-2xl bg-gradient-to-r from-[#D9A441] via-[#E4C56D] to-[#BE8B2C] hover:brightness-105 text-[#190918] font-bold text-xs sm:text-base shadow-lg shadow-[#D9A441]/30 hover:shadow-[#D9A441]/45 transform hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-1.5 sm:gap-2"
           >
             <span className="w-2 h-2 rounded-full bg-[#190918] animate-ping" />
-            Report Lost Item
+            <span>Report Lost Item</span>
           </button>
           <button
             onClick={() => onQuickReport && onQuickReport('found')}
-            className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-[#30152F] to-[#481E46] hover:from-[#240E23] hover:to-[#30152F] text-[#E8EDF2] font-semibold text-sm sm:text-base border border-[#D9A441]/40 shadow-lg shadow-[#30152F]/30 hover:shadow-[#30152F]/50 transform hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2"
+            className="px-4 sm:px-6 py-2.5 sm:py-3.5 rounded-2xl bg-gradient-to-r from-[#30152F] to-[#481E46] hover:from-[#240E23] hover:to-[#30152F] text-[#E8EDF2] font-semibold text-xs sm:text-base border border-[#D9A441]/40 shadow-lg shadow-[#30152F]/30 hover:shadow-[#30152F]/50 transform hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-1.5 sm:gap-2"
           >
             <span className="w-2 h-2 rounded-full bg-[#D9A441]" />
-            Report Found Item
+            <span>Report Found Item</span>
           </button>
           <button
             onClick={() => onExploreSearch && onExploreSearch()}
-            className="px-5 py-3.5 rounded-2xl bg-[#2B112A]/90 hover:bg-[#30152F] border border-[#D9A441]/30 text-[#E8EDF2] font-semibold text-sm sm:text-base shadow-md backdrop-blur-md transition-all flex items-center gap-2"
+            className="px-3.5 sm:px-5 py-2.5 sm:py-3.5 rounded-2xl bg-[#2B112A]/90 hover:bg-[#30152F] border border-[#D9A441]/30 text-[#E8EDF2] font-semibold text-xs sm:text-base shadow-md backdrop-blur-md transition-all flex items-center gap-1.5 sm:gap-2"
           >
             <Eye className="w-4 h-4 text-[#D9A441]" />
-            Browse Registry
+            <span>Browse Registry</span>
           </button>
         </div>
       </div>
